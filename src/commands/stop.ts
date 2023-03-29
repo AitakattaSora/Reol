@@ -1,11 +1,9 @@
-import { Message } from 'discord.js';
-import { MyClient } from '..';
 import { Command } from '../interfaces/Command';
 
 export default {
   name: 'stop',
   description: 'Stop the music',
-  async execute(client: MyClient, message: Message<boolean>) {
+  async execute(client, message) {
     try {
       const guildId = message.guildId;
       if (!guildId) throw new GuildNotFoundError();

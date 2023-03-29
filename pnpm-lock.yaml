@@ -20,6 +20,7 @@ specifiers:
   ts-node: ^10.9.1
   tweetnacl: ^1.0.3
   typescript: ^4.9.5
+  youtube-sr: ^4.3.4
 
 dependencies:
   '@discordjs/opus': 0.9.0
@@ -35,6 +36,7 @@ dependencies:
   sodium-native: 4.0.1
   spotify-url-info: 3.2.3
   tweetnacl: 1.0.3
+  youtube-sr: 4.3.4
 
 devDependencies:
   '@types/async-retry': 1.4.5
@@ -1300,3 +1302,7 @@ packages:
     resolution: {integrity: sha512-Ux4ygGWsu2c7isFWe8Yu1YluJmqVhxqK2cLXNQA5AcC3QfbGNpM7fu0Y8b/z16pXLnFxZYvWhd3fhBY9DLmC6Q==}
     engines: {node: '>=6'}
     dev: true
+
+  /youtube-sr/4.3.4:
+    resolution: {integrity: sha512-olSYcR80XigutCrePEXBX3/RJJrWfonJQj7+/ggBiWU0CzTDLE1q8+lpWTWCG0JpzhzILp/IB/Bq/glGqqr1TQ==}
+    dev: false

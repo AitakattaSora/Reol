@@ -1,15 +1,17 @@
-import { EmbedBuilder, Message } from 'discord.js';
-import { MyClient } from '..';
+import { EmbedBuilder } from 'discord.js';
 import { Command } from '../interfaces/Command';
 import { ENV } from '../utils/ENV';
+import { DEFAULT_COLOR } from '../utils/helpers';
 
 export default {
   name: 'help',
   description: 'List all commands',
   aliases: ['h'],
-  async execute(client: MyClient, message: Message<boolean>) {
+  async execute(client, message) {
     const commands = client.commands;
-    const helpEmbed = new EmbedBuilder().setTitle('Help').setColor('#FFFFFF');
+    const helpEmbed = new EmbedBuilder()
+      .setTitle('Help')
+      .setColor(DEFAULT_COLOR);
 
     commands.forEach((cmd) => {
       helpEmbed.addFields({
@@ -23,8 +25,6 @@ export default {
       name: 'Or just send a YouTube or Spotify link',
       value: 'and I will play it :)',
     });
-
-    helpEmbed.setTimestamp();
 
     return message.reply({
       embeds: [helpEmbed],

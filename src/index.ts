@@ -1,16 +1,14 @@
 import {
   Client,
   GatewayIntentBits,
-  VoiceBasedChannel,
   Collection,
   Snowflake,
   TextChannel,
-  ActivityType,
 } from 'discord.js';
 import { loadCommands } from './utils/loadCommands';
 import { Queue } from './interfaces/Queue';
-import { SPOTIFY_REGEX, YOUTUBE_REGEX } from './utils/getVideo';
 import { ENV } from './utils/ENV';
+import { SPOTIFY_REGEX, YOUTUBE_REGEX } from './utils/helpers';
 
 if (!ENV.TOKEN) {
   throw new Error('TOKEN is not defined');

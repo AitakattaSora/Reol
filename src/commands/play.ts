@@ -1,17 +1,27 @@
-import { Message, TextChannel, VoiceBasedChannel } from 'discord.js';
-import { MyClient } from '..';
-import { Queue, Track } from '../interfaces/Queue';
+import { TextChannel, VoiceBasedChannel } from 'discord.js';
+import { Queue } from '../interfaces/Queue';
 import { joinVoiceChannel } from '@discordjs/voice';
-import { getVideo } from '../utils/getVideo';
 import { ENV } from '../utils/ENV';
 import { Command } from '../interfaces/Command';
+import { getTrack } from '../utils/getTrack';
+import { isPlaylist } from '../utils/helpers';
 
 export default {
   name: 'play',
   description: 'Play a song from YouTube or Spotify',
   aliases: ['p'],
-  async execute(client: MyClient, message: Message<boolean>, args: string[]) {
+  async execute(client, message, args) {
     try {
+      if (!args?.length) {
+        return message.reply('Please provide a search query or link');
+      }
+
+      if (isPlaylist(args[0])) {
+        return client.commands
+          .get('playlist')
+          .execute(client, message, [args[0]]);
+      }
+
       if (!message.channel) {
         return message.reply('Channel not found');
       }
@@ -30,10 +40,9 @@ export default {
       if (!guildId) throw new GuildNotFoundError();
 
       const query = args.join(' ');
-      const video = await getVideo(query);
+      const track = await getTrack(query);
 
       const queue = client.queues.get(guildId);
-      const track = new Track(video.url, video.title, video.durationFormatted);
       if (queue) {
         queue.enqueue(track);
 

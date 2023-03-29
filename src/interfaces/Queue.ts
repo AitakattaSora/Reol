@@ -181,6 +181,7 @@ export class Queue {
   public stop() {
     if (this.stopped) return;
 
+    // this.queueLock = false;
     this.stopped = true;
     this.loop = false;
     this.tracks = [];
