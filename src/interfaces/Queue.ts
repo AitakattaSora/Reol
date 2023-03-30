@@ -217,7 +217,9 @@ export class Queue {
     const next = this.tracks[0];
 
     try {
-      const stream = await play.stream(next.url);
+      const stream = await play.stream(next.url, {
+        quality: 1,
+      });
       const resource = createAudioResource(stream.stream, {
         inputType: stream.type,
       });
