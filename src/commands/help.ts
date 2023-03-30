@@ -1,7 +1,7 @@
 import { EmbedBuilder } from 'discord.js';
 import { Command } from '../interfaces/Command';
 import { ENV } from '../utils/ENV';
-import { DEFAULT_COLOR } from '../utils/helpers';
+import { DEFAULT_COLOR, DEFAULT_THUMBNAIL } from '../utils/helpers';
 
 export default {
   name: 'help',
@@ -11,6 +11,7 @@ export default {
     const commands = client.commands;
     const helpEmbed = new EmbedBuilder()
       .setTitle('Help')
+      .setThumbnail(DEFAULT_THUMBNAIL)
       .setColor(DEFAULT_COLOR);
 
     commands.forEach((cmd) => {

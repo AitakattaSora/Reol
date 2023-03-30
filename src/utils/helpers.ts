@@ -26,4 +26,5 @@ export function isPlaylist(url: string): boolean {
   );
 }
 
-export const DEFAULT_COLOR = '#FFFFFF';
+export const DEFAULT_COLOR = '#504A64';
+export const DEFAULT_THUMBNAIL = 'https://iili.io/HO91F8Q.jpg';

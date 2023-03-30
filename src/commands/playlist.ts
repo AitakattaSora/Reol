@@ -68,7 +68,7 @@ export default {
         );
       }
 
-      return message.reply({
+      return message.channel.send({
         embeds: [playlistEmbed],
       });
     } catch (error) {

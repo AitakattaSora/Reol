@@ -17,6 +17,7 @@ import { promisify } from 'node:util';
 import play from 'play-dl';
 import client from '..';
 import { ENV } from '../utils/ENV';
+import { Track } from './Track';
 
 const wait = promisify(setTimeout);
 
@@ -24,18 +25,6 @@ export interface QueueOptions {
   message: Message;
   textChannel: TextChannel;
   connection: VoiceConnection;
-}
-
-export class Track {
-  readonly url: string;
-  readonly title: string;
-  readonly durationRaw: string;
-
-  constructor(url: string, title: string, durationRaw: string) {
-    this.url = url;
-    this.title = title;
-    this.durationRaw = durationRaw;
-  }
 }
 
 export class Queue {

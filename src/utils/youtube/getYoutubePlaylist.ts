@@ -8,6 +8,7 @@ export async function getYoutubePlaylist(url: string): Promise<Playlist> {
       title: video.title || 'No title',
       url: video.url,
       durationRaw: video.durationFormatted,
+      durationSec: video.duration,
     }));
 
     return {

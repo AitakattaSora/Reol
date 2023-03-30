@@ -1,4 +1,4 @@
-import { Track } from '../interfaces/Queue';
+import { Track } from '../interfaces/Track';
 import { isSpotifyURL } from './helpers';
 import { getSpotifyPlaylist } from './spotify/getSpotifyPlaylist';
 import { getYoutubePlaylist } from './youtube/getYoutubePlaylist';

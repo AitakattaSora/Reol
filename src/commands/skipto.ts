@@ -3,6 +3,7 @@ import { Command } from '../interfaces/Command';
 export default {
   name: 'skipto',
   aliases: ['st'],
+  description: 'Skip to a specific track in the queue',
   execute: async (client, message, args) => {
     try {
       const guildId = message.guildId;

@@ -1,6 +1,6 @@
 import retry from 'async-retry';
 import play from 'play-dl';
-import { Track } from '../../interfaces/Queue';
+import { Track } from '../../interfaces/Track';
 
 export async function getYoutubeTrackByQuery(query: string): Promise<Track> {
   return retry(async () => {
@@ -14,6 +14,7 @@ export async function getYoutubeTrackByQuery(query: string): Promise<Track> {
         url: videos[0].url,
         title: videos[0].title || 'No title',
         durationRaw: videos[0].durationRaw,
+        durationSec: videos[0].durationInSec,
       };
     } catch (error) {
       throw error;
@@ -32,6 +33,7 @@ export async function getYoutubeTrackByURL(url: string): Promise<Track> {
           url: video.video_details.url,
           title: video.video_details.title || 'No title',
           durationRaw: video.video_details.durationRaw,
+          durationSec: video.video_details.durationInSec,
         };
       } catch (error) {
         throw error;

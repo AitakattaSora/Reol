@@ -1,7 +1,8 @@
 import { EmbedBuilder } from 'discord.js';
+import humanizeDuration from 'humanize-duration';
 import { Command } from '../interfaces/Command';
 import { ENV } from '../utils/ENV';
-import { DEFAULT_COLOR } from '../utils/helpers';
+import { DEFAULT_COLOR, DEFAULT_THUMBNAIL } from '../utils/helpers';
 
 export default {
   name: 'queue',
@@ -27,10 +28,18 @@ export default {
         return message.reply(`Page ${page} does not exist.`);
       }
 
+      const totalDurationSec = tracks.reduce(
+        (acc, track) => acc + track.durationSec,
+        0
+      );
+      const queueDuration = humanizeDuration(totalDurationSec * 1000, {
+        round: true,
+      });
+
       const queueEmbed = new EmbedBuilder();
       queueEmbed
-        .setTitle(`${tracks.length} tracks`)
-        .setThumbnail(message.guild?.iconURL() || null)
+        .setDescription(`${tracks.length} tracks, ${queueDuration}`)
+        .setThumbnail(DEFAULT_THUMBNAIL)
         .setColor(DEFAULT_COLOR);
 
       tracks
@@ -44,13 +53,15 @@ export default {
 
       if (pages > 1) {
         queueEmbed
-          .setTitle(`${tracks.length} tracks - Page ${page} of ${pages}`)
+          .setAuthor({
+            name: `Page ${page} of ${pages}`,
+          })
           .setFooter({
             text: `${ENV.PREFIX}queue <page> to view a specific page`,
           });
       }
 
-      return message.reply({ embeds: [queueEmbed] });
+      return message.channel.send({ embeds: [queueEmbed] });
     } catch (error) {
       console.log(error);
 

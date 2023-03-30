@@ -1,5 +1,5 @@
 import retry from 'async-retry';
-import { Track } from '../../interfaces/Queue';
+import { Track } from '../../interfaces/Track';
 import { getYoutubeTrackByQuery } from '../youtube/getYoutubeTrack';
 import fetch from 'isomorphic-unfetch';
 const { getPreview } = require('spotify-url-info')(fetch);
