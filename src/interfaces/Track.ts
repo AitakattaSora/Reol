@@ -3,4 +3,10 @@ export interface Track {
   title: string;
   durationRaw: string;
   durationSec: number;
+  metadata?: TrackMetadata;
+}
+
+export interface TrackMetadata {
+  artist: string;
+  title: string;
 }

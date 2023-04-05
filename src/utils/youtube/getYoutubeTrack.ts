@@ -1,8 +1,11 @@
 import retry from 'async-retry';
 import play from 'play-dl';
-import { Track } from '../../interfaces/Track';
+import { Track, TrackMetadata } from '../../interfaces/Track';
 
-export async function getYoutubeTrackByQuery(query: string): Promise<Track> {
+export async function getYoutubeTrackByQuery(
+  query: string,
+  metadata?: TrackMetadata
+): Promise<Track> {
   return retry(async () => {
     try {
       const videos = await play.search(query);
@@ -15,6 +18,7 @@ export async function getYoutubeTrackByQuery(query: string): Promise<Track> {
         title: videos[0].title || 'No title',
         durationRaw: videos[0].durationRaw,
         durationSec: videos[0].durationInSec,
+        metadata,
       };
     } catch (error) {
       throw error;
