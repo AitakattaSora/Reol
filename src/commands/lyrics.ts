@@ -33,7 +33,9 @@ export default {
 
       const track = queue.tracks[0];
       const { lyrics, thumbnail, title, url } = await getLyrics(
-        track.metadata ? `${track.title} ${track.metadata}` : track.title
+        track.metadata
+          ? `${track.metadata.artist} - ${track.metadata.title}`
+          : track.title
       );
 
       const lyricsEmbed = new EmbedBuilder()
