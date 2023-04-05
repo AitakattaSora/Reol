@@ -86,7 +86,6 @@ client.on('messageCreate', async (message) => {
     client.commands.find((cmd) => cmd.aliases && cmd.aliases.includes(command));
 
   if (cmd) {
-    console.log(`-> executing command: ${cmd.name} with args: ${args}`);
     cmd.execute(client, message, args);
   }
 });
