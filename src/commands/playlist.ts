@@ -53,20 +53,21 @@ export default {
         newQueue.enqueue(...tracks);
       }
 
+      const description = tracks
+        .map((song, idx) => `${idx + 1}. ${song.title}`)
+        .join('\n');
+
+      const embedDescription =
+        description.length >= 4096
+          ? description.substring(0, 4000) +
+            '...\nPlaylist larger than character limit...'
+          : description;
+
       const playlistEmbed = new EmbedBuilder()
         .setTitle(`${playlist.title}`)
-        .setDescription(
-          tracks.map((song, idx) => `${idx + 1}. ${song.title}`).join('\n')
-        )
+        .setDescription(embedDescription)
         .setURL(playlist.url)
         .setColor(DEFAULT_COLOR);
-
-      if (playlistEmbed.data.description!.length >= 2048) {
-        playlistEmbed.setDescription(
-          playlistEmbed.data.description!.substring(0, 2007) +
-            '\nPlaylist larger than character limit...'
-        );
-      }
 
       return message.channel.send({
         embeds: [playlistEmbed],

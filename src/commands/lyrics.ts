@@ -13,35 +13,32 @@ export default {
       if (!guildId) throw new GuildNotFoundError();
 
       const query = args?.join(' ');
+
+      let lyricsQuery = '';
       if (query) {
-        const { lyrics, thumbnail, title, url } = await getLyrics(query);
+        lyricsQuery = query;
+      } else {
+        const queue = client.queues.get(guildId);
+        if (!queue || !queue.tracks.length) {
+          return message.channel.send('There is no queue.');
+        }
 
-        const lyricsEmbed = new EmbedBuilder()
-          .setTitle(title)
-          .setURL(url)
-          .setDescription(lyrics)
-          .setThumbnail(thumbnail)
-          .setColor(DEFAULT_COLOR);
-
-        return message.channel.send({ embeds: [lyricsEmbed] });
+        const track = queue.tracks[0];
+        lyricsQuery = `${track.metadata?.artist} - ${track.metadata?.title}`;
       }
 
-      const queue = client.queues.get(guildId);
-      if (!queue || !queue.tracks.length) {
-        return message.channel.send('There is no queue.');
-      }
+      const { lyrics, thumbnail, title, url } = await getLyrics(lyricsQuery);
 
-      const track = queue.tracks[0];
-      const { lyrics, thumbnail, title, url } = await getLyrics(
-        track.metadata
-          ? `${track.metadata.artist} - ${track.metadata.title}`
-          : track.title
-      );
+      const embedDescription =
+        lyrics.length >= 4096
+          ? lyrics.substring(0, 4000) +
+            '...\n\n...Lyrics too long, go to the link above.'
+          : lyrics;
 
       const lyricsEmbed = new EmbedBuilder()
         .setTitle(title)
         .setURL(url)
-        .setDescription(lyrics)
+        .setDescription(embedDescription)
         .setThumbnail(thumbnail)
         .setColor(DEFAULT_COLOR);
 
