@@ -235,4 +235,12 @@ export class Queue {
       return;
     }
   }
+
+  public shuffle() {
+    // we don't want to shuffle the first track
+    for (let i = this.tracks.length - 1; i > 1; i--) {
+      let j = 1 + Math.floor(Math.random() * i);
+      [this.tracks[i], this.tracks[j]] = [this.tracks[j], this.tracks[i]];
+    }
+  }
 }
