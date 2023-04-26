@@ -46,7 +46,11 @@ export default {
       if (queue) {
         queue.enqueue(track);
 
-        return message.channel.send(`Added to queue: ${track.url}`);
+        if (queue.tracks.length > 1) {
+          message.channel.send(`Added to queue: **${track.title}**`);
+        }
+
+        return;
       }
 
       const newQueue = new Queue({
