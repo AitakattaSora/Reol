@@ -2,7 +2,7 @@ lockfileVersion: 5.4
 
 specifiers:
   '@discordjs/opus': ^0.9.0
-  '@discordjs/voice': ^0.15.0
+  '@discordjs/voice': ^0.16.0
   '@types/async-retry': ^1.4.5
   '@types/humanize-duration': ^3.27.1
   '@types/node': ^18.15.9
@@ -29,7 +29,7 @@ specifiers:
 
 dependencies:
   '@discordjs/opus': 0.9.0
-  '@discordjs/voice': 0.15.0_ze65rbucijy2muftgwz2ymahqe
+  '@discordjs/voice': 0.16.0_ze65rbucijy2muftgwz2ymahqe
   async-retry: 1.3.3
   discord.js: 14.8.0
   dotenv: 16.0.3
@@ -148,8 +148,8 @@ packages:
     engines: {node: '>=16.9.0'}
     dev: false
 
-  /@discordjs/voice/0.15.0_ze65rbucijy2muftgwz2ymahqe:
-    resolution: {integrity: sha512-YEvrRchDhjB0QbI9QYOF/qgDwvGb9sNGUyks5d3Srl+VRoMoKkMzWY+wcEfVbAgdMIAdLi5vyrTKP/gLND26jA==}
+  /@discordjs/voice/0.16.0_ze65rbucijy2muftgwz2ymahqe:
+    resolution: {integrity: sha512-ToGCvHD1cBscuW3p+C7zOF5+L7MJmU4GjdOARfNk9mkHyFFZq4grK+Sxr3QXKbp27DtfDBc9uqD4GUOYgxngfA==}
     engines: {node: '>=16.9.0'}
     dependencies:
       '@types/ws': 8.5.4
