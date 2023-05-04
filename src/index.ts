@@ -9,6 +9,7 @@ import { loadCommands } from './utils/loadCommands';
 import { Queue } from './interfaces/Queue';
 import { ENV } from './utils/ENV';
 import { SPOTIFY_REGEX, YOUTUBE_REGEX } from './utils/helpers';
+import { AppDataSource } from './db';
 
 if (!ENV.TOKEN) {
   throw new Error('TOKEN is not defined');
@@ -40,6 +41,9 @@ client.login(ENV.TOKEN);
 
 client.on('ready', async () => {
   await loadCommands(client);
+  if (ENV.USE_DB) {
+    await AppDataSource.initialize();
+  }
 
   if (ENV.TEXT_CHANNEL_ID) {
     // send a message to the channel

@@ -5,6 +5,7 @@ import { ENV } from '../utils/ENV';
 import { Command } from '../interfaces/Command';
 import { getTrack } from '../utils/getTrack';
 import { isPlaylist } from '../utils/helpers';
+import { createOrUpdateSongRequest } from '../db/methods/createOrUpdateSongRequest';
 
 export default {
   name: 'play',
@@ -41,6 +42,10 @@ export default {
 
       const query = args.join(' ');
       const track = await getTrack(query);
+
+      if (ENV.USE_DB) {
+        await createOrUpdateSongRequest(track.url, track.title);
+      }
 
       const queue = client.queues.get(guildId);
       if (queue) {

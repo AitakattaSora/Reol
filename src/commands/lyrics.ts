@@ -2,6 +2,7 @@ import { EmbedBuilder } from 'discord.js';
 import { Command } from '../interfaces/Command';
 import { getLyrics } from '../utils/lyrics/getLyrics';
 import { DEFAULT_COLOR } from '../utils/helpers';
+import { truncateLongDescription } from '../utils/truncateDescription';
 
 export default {
   name: 'lyrics',
@@ -29,11 +30,7 @@ export default {
 
       const { lyrics, thumbnail, title, url } = await getLyrics(lyricsQuery);
 
-      const embedDescription =
-        lyrics.length >= 4096
-          ? lyrics.substring(0, 4000) +
-            '...\n\n...Lyrics too long, go to the link above.'
-          : lyrics;
+      const embedDescription = truncateLongDescription(lyrics);
 
       const lyricsEmbed = new EmbedBuilder()
         .setTitle(title)

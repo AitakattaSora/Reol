@@ -29,7 +29,9 @@
     "play-dl": "^1.9.6",
     "sodium-native": "^4.0.1",
     "spotify-url-info": "^3.2.3",
+    "sqlite3": "^5.1.6",
     "tweetnacl": "^1.0.3",
+    "typeorm": "^0.3.15",
     "youtube-sr": "^4.3.4"
   },
   "devDependencies": {

@@ -5,6 +5,7 @@ import { Queue } from '../interfaces/Queue';
 import { ENV } from '../utils/ENV';
 import { getPlaylist } from '../utils/getPlaylist';
 import { DEFAULT_COLOR } from '../utils/helpers';
+import { truncateLongDescription } from '../utils/truncateDescription';
 
 export default {
   name: 'playlist',
@@ -56,12 +57,7 @@ export default {
       const description = tracks
         .map((song, idx) => `${idx + 1}. ${song.title}`)
         .join('\n');
-
-      const embedDescription =
-        description.length >= 4096
-          ? description.substring(0, 4000) +
-            '...\nPlaylist larger than character limit...'
-          : description;
+      const embedDescription = truncateLongDescription(description);
 
       const playlistEmbed = new EmbedBuilder()
         .setTitle(`${playlist.title}`)
