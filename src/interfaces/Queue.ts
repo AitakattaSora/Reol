@@ -54,21 +54,13 @@ export class Queue {
     });
     this.connection.subscribe(this.player);
 
-    // this.player.on('debug', (message) => {
-    //   console.log('[DEBUG]', message);
-    // });
-
-    // this.player.on('error', (error) => {
-    //   console.error('[ERROR]', error);
-    // });
-
-    // this.player.on('stateChange', (oldState, newState) => {
-    //   console.log('[STATE CHANGE]', oldState, '->', newState);
-    // });
-
-    // this.player.on('subscribe', (subscription) => {
-    //   console.log('[SUBSCRIBE]', subscription);
-    // });
+    const networkStateChangeHandler = (
+      oldNetworkState: any,
+      newNetworkState: any
+    ) => {
+      const newUdp = Reflect.get(newNetworkState, 'udp');
+      clearInterval(newUdp?.keepAliveInterval);
+    };
 
     this.connection.on(
       'stateChange' as any,
@@ -76,6 +68,15 @@ export class Queue {
         oldState: VoiceConnectionState,
         newState: VoiceConnectionState
       ) => {
+        Reflect.get(oldState, 'networking')?.off(
+          'stateChange',
+          networkStateChangeHandler
+        );
+        Reflect.get(newState, 'networking')?.on(
+          'stateChange',
+          networkStateChangeHandler
+        );
+
         if (newState.status === VoiceConnectionStatus.Disconnected) {
           if (
             newState.reason ===
@@ -206,9 +207,7 @@ export class Queue {
     const next = this.tracks[0];
 
     try {
-      const stream = await play.stream(next.url, {
-        quality: 1,
-      });
+      const stream = await play.stream(next.url);
       const resource = createAudioResource(stream.stream, {
         inputType: stream.type,
       });
