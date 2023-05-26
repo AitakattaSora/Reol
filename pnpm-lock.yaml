@@ -15,8 +15,9 @@ specifiers:
   get-video-id: ^3.6.5
   humanize-duration: ^3.28.0
   isomorphic-unfetch: ^4.0.2
+  libsodium-wrappers: ^0.7.11
   nodemon: ^2.0.21
-  opusscript: ^0.0.8
+  opusscript: ^0.1.0
   play-dl: ^1.9.6
   sodium-native: ^4.0.1
   spotify-url-info: ^3.2.3
@@ -29,7 +30,7 @@ specifiers:
 
 dependencies:
   '@discordjs/opus': 0.9.0
-  '@discordjs/voice': 0.16.0_ze65rbucijy2muftgwz2ymahqe
+  '@discordjs/voice': 0.16.0_thf5bggg5npj2rsovluutlts4m
   async-retry: 1.3.3
   discord.js: 14.8.0
   dotenv: 16.0.3
@@ -38,7 +39,8 @@ dependencies:
   get-video-id: 3.6.5
   humanize-duration: 3.28.0
   isomorphic-unfetch: 4.0.2
-  opusscript: 0.0.8
+  libsodium-wrappers: 0.7.11
+  opusscript: 0.1.0
   play-dl: 1.9.6
   sodium-native: 4.0.1
   spotify-url-info: 3.2.3
@@ -148,13 +150,13 @@ packages:
     engines: {node: '>=16.9.0'}
     dev: false
 
-  /@discordjs/voice/0.16.0_ze65rbucijy2muftgwz2ymahqe:
+  /@discordjs/voice/0.16.0_thf5bggg5npj2rsovluutlts4m:
     resolution: {integrity: sha512-ToGCvHD1cBscuW3p+C7zOF5+L7MJmU4GjdOARfNk9mkHyFFZq4grK+Sxr3QXKbp27DtfDBc9uqD4GUOYgxngfA==}
     engines: {node: '>=16.9.0'}
     dependencies:
       '@types/ws': 8.5.4
       discord-api-types: 0.37.37
-      prism-media: 1.3.5_ze65rbucijy2muftgwz2ymahqe
+      prism-media: 1.3.5_thf5bggg5npj2rsovluutlts4m
       tslib: 2.5.0
       ws: 8.13.0
     transitivePeerDependencies:
@@ -1081,6 +1083,16 @@ packages:
       unfetch: 5.0.0
     dev: false
 
+  /libsodium-wrappers/0.7.11:
+    resolution: {integrity: sha512-SrcLtXj7BM19vUKtQuyQKiQCRJPgbpauzl3s0rSwD+60wtHqSUuqcoawlMDheCJga85nKOQwxNYQxf/CKAvs6Q==}
+    dependencies:
+      libsodium: 0.7.11
+    dev: false
+
+  /libsodium/0.7.11:
+    resolution: {integrity: sha512-WPfJ7sS53I2s4iM58QxY3Inb83/6mjlYgcmZs7DJsvDlnmVUwNinBCi5vBT43P6bHRy01O4zsMU2CoVR6xJ40A==}
+    dev: false
+
   /lodash.snakecase/4.1.1:
     resolution: {integrity: sha512-QZ1d4xoBHYUeuouhEq3lk3Uq7ldgyFXGBhg04+oRLnIz8o9T65Eh+8YdroUwn846zchkA9yDsDl5CVVaV2nqYw==}
     dev: false
@@ -1375,8 +1387,8 @@ packages:
       wrappy: 1.0.2
     dev: false
 
-  /opusscript/0.0.8:
-    resolution: {integrity: sha512-VSTi1aWFuCkRCVq+tx/BQ5q9fMnQ9pVZ3JU4UHKqTkf0ED3fKEPdr+gKAAl3IA2hj9rrP6iyq3hlcJq3HELtNQ==}
+  /opusscript/0.1.0:
+    resolution: {integrity: sha512-Jc1d2u7AutNcUCoSpshhStW4CVAZXqh8n832ZTFUwZowof+xq2JW4umsWwAUOdtczn2z0UJMkUoTYBFT8qto9g==}
     dev: false
 
   /p-map/4.0.0:
@@ -1444,7 +1456,7 @@ packages:
       play-audio: 0.5.2
     dev: false
 
-  /prism-media/1.3.5_ze65rbucijy2muftgwz2ymahqe:
+  /prism-media/1.3.5_thf5bggg5npj2rsovluutlts4m:
     resolution: {integrity: sha512-IQdl0Q01m4LrkN1EGIE9lphov5Hy7WWlH6ulf5QdGePLlPas9p2mhgddTEHrlaXYjjFToM1/rWuwF37VF4taaA==}
     peerDependencies:
       '@discordjs/opus': '>=0.8.0 <1.0.0'
@@ -1463,7 +1475,7 @@ packages:
     dependencies:
       '@discordjs/opus': 0.9.0
       ffmpeg-static: 5.1.0
-      opusscript: 0.0.8
+      opusscript: 0.1.0
     dev: false
 
   /progress/2.0.3:
