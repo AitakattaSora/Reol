@@ -12,16 +12,18 @@ export async function getTrack(query: string): Promise<Track> {
     const isYoutube = isYoutubeURL(query);
 
     if (isYoutube) {
-      return getYoutubeTrackByURL(query);
+      return await getYoutubeTrackByURL(query);
     }
 
     if (isSpotify) {
-      return getSpotifyTrack(query);
+      return await getSpotifyTrack(query);
     }
 
     return getYoutubeTrackByQuery(query);
-  } catch (error) {
-    console.log(error);
+  } catch (error: any) {
+    if (error.message?.includes('Sign in to confirm your age')) {
+      throw new Error('This video is age restricted. Please update cookies.');
+    }
 
     throw error;
   }
