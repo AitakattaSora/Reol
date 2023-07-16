@@ -1,3 +1,4 @@
+import { promises as fs } from 'fs';
 import {
   AudioPlayer,
   AudioPlayerState,
@@ -208,6 +209,43 @@ export class Queue {
 
     try {
       const stream = await play.stream(next.url);
+
+      const streamUrl = (stream as any).url;
+      if (!streamUrl) {
+        throw new Error('Stream URL not found');
+      }
+
+      const params = new URLSearchParams(streamUrl);
+      const streamDuration = params.get('dur');
+
+      console.log(streamUrl);
+
+      // check if diff is more than 10 seconds
+      if (
+        streamDuration &&
+        Math.abs(Number(streamDuration) - next.durationSec) > 5
+      ) {
+        console.log('Stream duration mismatch!');
+
+        const file = await fs.readFile('./data/stream-mismatch.json', 'utf8');
+        const mismatches = JSON.parse(file);
+
+        mismatches.push({
+          url: next.url,
+          streamUrl,
+          duration: {
+            diff: Math.abs(Number(streamDuration) - next.durationSec),
+            video: next.durationSec,
+            stream: streamDuration,
+          },
+        });
+
+        await fs.writeFile(
+          './data/stream-mismatch.json',
+          JSON.stringify(mismatches, null, 2)
+        );
+      }
+
       const resource = createAudioResource(stream.stream, {
         inputType: stream.type,
       });
