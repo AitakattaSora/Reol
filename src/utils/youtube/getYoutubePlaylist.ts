@@ -7,7 +7,7 @@ export async function getYoutubePlaylist(url: string): Promise<Playlist> {
     const tracks = playlist.videos.map((video) => ({
       title: video.title || 'No title',
       url: video.url,
-      durationRaw: video.durationFormatted,
+      durationFormatted: video.durationFormatted,
       durationSec: video.duration / 1000,
     }));
 
