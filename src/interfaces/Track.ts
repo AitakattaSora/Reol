@@ -1,7 +1,7 @@
 export interface Track {
   url: string;
   title: string;
-  durationRaw: string;
+  durationFormatted: string;
   durationSec: number;
   metadata?: TrackMetadata;
 }

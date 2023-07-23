@@ -68,9 +68,10 @@ export default {
       return message.channel.send({
         embeds: [playlistEmbed],
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      throw error;
+
+      return message.channel.send(error.message || 'Mixes are not supported');
     }
   },
 } as Command;

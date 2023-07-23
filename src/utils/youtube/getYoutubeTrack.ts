@@ -1,6 +1,7 @@
 import retry from 'async-retry';
-import play from 'play-dl';
+import getVideoId from 'get-video-id';
 import { Track, TrackMetadata } from '../../interfaces/Track';
+import yts from 'yt-search';
 
 export async function getYoutubeTrackByQuery(
   query: string,
@@ -9,16 +10,16 @@ export async function getYoutubeTrackByQuery(
   return retry(
     async () => {
       try {
-        const videos = await play.search(query);
+        const result = await yts({ query, category: 'video' });
 
-        const video = videos?.[0];
+        const video = result.videos?.[0];
         if (!video) throw new Error('No video found');
 
         return {
-          url: videos[0].url,
-          title: videos[0].title || 'No title',
-          durationRaw: videos[0].durationRaw,
-          durationSec: videos[0].durationInSec,
+          url: video.url,
+          title: video.title,
+          durationFormatted: video.duration.timestamp,
+          durationSec: video.duration.seconds,
           metadata,
         };
       } catch (error) {
@@ -33,14 +34,17 @@ export async function getYoutubeTrackByQuery(
 
 export async function getYoutubeTrackByURL(url: string): Promise<Track> {
   try {
-    const video = await play.video_basic_info(url);
+    const { id: videoId } = getVideoId(url);
+    if (!videoId) throw new Error('Invalid URL');
+
+    const video = await yts({ videoId });
     if (!video) throw new Error('No video found');
 
     return {
-      url: video.video_details.url,
-      title: video.video_details.title || 'No title',
-      durationRaw: video.video_details.durationRaw,
-      durationSec: video.video_details.durationInSec,
+      url: video.url,
+      title: video.title,
+      durationFormatted: video.duration.timestamp,
+      durationSec: video.duration.seconds,
     };
   } catch (error: any) {
     throw error;

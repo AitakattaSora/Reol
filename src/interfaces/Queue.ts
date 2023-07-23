@@ -1,11 +1,9 @@
-import { promises as fs } from 'fs';
 import {
   AudioPlayer,
   AudioPlayerState,
   AudioPlayerStatus,
   AudioResource,
   createAudioPlayer,
-  createAudioResource,
   entersState,
   NoSubscriberBehavior,
   VoiceConnection,
@@ -15,10 +13,10 @@ import {
 } from '@discordjs/voice';
 import { Message, TextChannel } from 'discord.js';
 import { promisify } from 'node:util';
-import play from 'play-dl';
 import client from '..';
 import { ENV } from '../utils/ENV';
 import { Track } from './Track';
+import { createResource } from '../utils/track/createResource';
 
 const wait = promisify(setTimeout);
 
@@ -208,49 +206,10 @@ export class Queue {
     const next = this.tracks[0];
 
     try {
-      const stream = await play.stream(next.url);
+      const resource = await createResource(next.url);
+      if (!resource) throw new Error('No stream found');
 
-      const streamUrl = (stream as any).url;
-      if (!streamUrl) {
-        throw new Error('Stream URL not found');
-      }
-
-      const params = new URLSearchParams(streamUrl);
-      const streamDuration = params.get('dur');
-
-      console.log(streamUrl);
-
-      // check if diff is more than 10 seconds
-      if (
-        streamDuration &&
-        Math.abs(Number(streamDuration) - next.durationSec) > 5
-      ) {
-        console.log('Stream duration mismatch!');
-
-        const file = await fs.readFile('./data/stream-mismatch.json', 'utf8');
-        const mismatches = JSON.parse(file);
-
-        mismatches.push({
-          url: next.url,
-          streamUrl,
-          duration: {
-            diff: Math.abs(Number(streamDuration) - next.durationSec),
-            video: next.durationSec,
-            stream: streamDuration,
-          },
-        });
-
-        await fs.writeFile(
-          './data/stream-mismatch.json',
-          JSON.stringify(mismatches, null, 2)
-        );
-      }
-
-      const resource = createAudioResource(stream.stream, {
-        inputType: stream.type,
-      });
-
-      this.resource = resource!;
+      this.resource = resource;
       this.player.play(this.resource);
 
       this.resource.volume?.setVolumeLogarithmic(this.volume / 100);
