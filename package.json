@@ -22,7 +22,6 @@
     "dotenv": "^16.0.3",
     "ffmpeg-static": "^5.1.0",
     "genius-lyrics": "^4.4.3",
-    "get-video-id": "^3.6.5",
     "get-youtube-id": "^1.0.1",
     "humanize-duration": "^3.28.0",
     "isomorphic-unfetch": "^4.0.2",
@@ -34,14 +33,12 @@
     "tweetnacl": "^1.0.3",
     "typeorm": "^0.3.15",
     "youtube-dl-exec": "^2.4.6",
-    "youtube-sr": "^4.3.4",
-    "yt-search": "^2.10.4"
+    "youtube-sr": "^4.3.4"
   },
   "devDependencies": {
     "@types/async-retry": "^1.4.5",
     "@types/humanize-duration": "^3.27.1",
     "@types/node": "^18.15.9",
-    "@types/yt-search": "^2.3.2",
     "concurrently": "^7.6.0",
     "nodemon": "^2.0.21",
     "ts-node": "^10.9.1",
