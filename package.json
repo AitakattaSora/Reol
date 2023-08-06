@@ -28,7 +28,7 @@
     "libsodium-wrappers": "^0.7.11",
     "opusscript": "^0.1.0",
     "sodium-native": "^4.0.1",
-    "spotify-url-info": "^3.2.3",
+    "spotify-url-info": "3.2.6",
     "sqlite3": "^5.1.6",
     "tweetnacl": "^1.0.3",
     "typeorm": "^0.3.15",
