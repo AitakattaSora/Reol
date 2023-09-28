@@ -10,6 +10,7 @@ import { Queue } from './interfaces/Queue';
 import { ENV } from './utils/ENV';
 import { SPOTIFY_REGEX, YOUTUBE_REGEX } from './utils/helpers';
 import { AppDataSource } from './db';
+import { schedulePrizePoolJob } from './utils/getTheInternationalPrizePool';
 
 if (!ENV.TOKEN) {
   throw new Error('TOKEN is not defined');
@@ -56,6 +57,8 @@ client.on('ready', async () => {
   }
 
   console.log(`Logged in as ${client?.user?.tag}!`);
+
+  schedulePrizePoolJob(client);
 });
 
 client.on('messageCreate', async (message) => {
