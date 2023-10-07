@@ -47,7 +47,9 @@ export default {
         .forEach((track, idx) => {
           queueEmbed.addFields({
             name: `${idx + PAGE_SIZE * (page - 1) + 1}. ${track.title}`,
-            value: `Duration: ${track.durationFormatted}`,
+            value:
+              `Duration: ${track.durationFormatted}` +
+              (track.requestedBy ? ` by ${track.requestedBy}` : ''),
           });
         });
 
