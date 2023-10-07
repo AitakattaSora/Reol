@@ -58,7 +58,9 @@ client.on('ready', async () => {
 
   console.log(`Logged in as ${client?.user?.tag}!`);
 
-  schedulePrizePoolJob(client);
+  if (ENV.PRIZE_POOL_CHANNEL_ID) {
+    schedulePrizePoolJob(client);
+  }
 });
 
 client.on('messageCreate', async (message) => {
