@@ -33,7 +33,10 @@ export default {
       if (!guildId) throw new GuildNotFoundError();
 
       const playlist = await getPlaylist(playlistLink);
-      const tracks = playlist.tracks;
+      const tracks = playlist.tracks.map((track) => ({
+        ...track,
+        requestedBy: message.author.displayName,
+      }));
 
       const queue = client.queues.get(guildId);
       if (queue) {

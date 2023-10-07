@@ -224,7 +224,11 @@ export class Queue {
 
   private async sendPlayingMessage() {
     try {
-      return this.textChannel.send(`**Now playing**: ${this.tracks[0].url}`);
+      const track = this.tracks[0];
+      return this.textChannel.send(
+        `**Now playing**: ${track.url}` +
+          (track.requestedBy ? `\nRequested by **${track.requestedBy}**` : '')
+      );
     } catch (error: any) {
       console.error(error);
       this.textChannel.send(error.message);

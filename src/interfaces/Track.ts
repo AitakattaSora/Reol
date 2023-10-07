@@ -3,6 +3,7 @@ export interface Track {
   title: string;
   durationFormatted: string;
   durationSec: number;
+  requestedBy?: string;
   metadata?: TrackMetadata;
 }
 

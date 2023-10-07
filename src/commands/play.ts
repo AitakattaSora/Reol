@@ -42,6 +42,7 @@ export default {
 
       const query = args.join(' ');
       const track = await getTrack(query);
+      track.requestedBy = message.author.displayName;
 
       if (ENV.USE_DB) {
         await createOrUpdateSongRequest(track.url, track.title);
