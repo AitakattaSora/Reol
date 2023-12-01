@@ -1,4 +1,9 @@
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+} from 'typeorm';
 
 @Entity()
 export class SongRequest {
@@ -11,6 +16,9 @@ export class SongRequest {
   @Column()
   title: string;
 
-  @Column({ default: 1 })
-  requestCount: number;
+  @Column()
+  requestedBy: string;
+
+  @CreateDateColumn({ type: 'datetime', default: () => 'CURRENT_TIMESTAMP' })
+  requestedAt: Date;
 }

@@ -5,7 +5,7 @@ import { ENV } from '../utils/ENV';
 import { Command } from '../interfaces/Command';
 import { getTrack } from '../utils/getTrack';
 import { isPlaylist } from '../utils/helpers';
-import { createOrUpdateSongRequest } from '../db/methods/createOrUpdateSongRequest';
+import { saveSongRequest } from '../db/methods/saveSongRequest';
 
 export default {
   name: 'play',
@@ -45,7 +45,7 @@ export default {
       track.requestedBy = message.author.displayName;
 
       if (ENV.USE_DB) {
-        await createOrUpdateSongRequest(track.url, track.title);
+        await saveSongRequest(track.url, track.title, message.author.id);
       }
 
       const queue = client.queues.get(guildId);
