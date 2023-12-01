@@ -16,22 +16,25 @@ export default {
 
     const count = Number(args?.[0]) || 10;
 
-    const tracks = await AppDataSource.manager.find(SongRequest, {
-      order: {
-        requestCount: 'DESC',
-      },
-      take: count,
-    });
+    const songRequestRepository = AppDataSource.getRepository(SongRequest);
+    const requests: Array<SongRequest & { count: number }> =
+      await songRequestRepository
+        .createQueryBuilder('song_request')
+        .select(['id', 'title', 'url', 'COUNT(url) AS count'])
+        .groupBy('url')
+        .orderBy('COUNT(url)', 'DESC')
+        .take(count)
+        .getRawMany();
 
-    if (!tracks.length) {
+    if (!requests.length) {
       return message.reply('No songs requested yet');
     }
 
-    const description = tracks
+    const description = requests
       .map(
-        (song, idx) =>
-          `${idx + 1}. [${song.title}](${song.url}) - ${
-            song.requestCount
+        (request, idx) =>
+          `${idx + 1}. [${request.title}](${request.url}) - ${
+            request.count
           } plays`
       )
       .join('\n');
