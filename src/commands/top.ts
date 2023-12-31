@@ -9,7 +9,7 @@ import { ENV } from '../utils/ENV';
 export default {
   name: 'top',
   description: 'List the top requested songs',
-  async execute(_, message, args) {
+  async execute(client, message, args) {
     if (!ENV.USE_DB) {
       return message.reply('Song requests recording is not enabled');
     }
@@ -30,7 +30,7 @@ export default {
       return message.reply('No songs requested yet');
     }
 
-    const description = requests
+    const mostRequestedDescription = requests
       .map(
         (request, idx) =>
           `${idx + 1}. [${request.title}](${request.url}) - ${
@@ -39,14 +39,39 @@ export default {
       )
       .join('\n');
 
-    const embedDescription = truncateLongDescription(description);
     const topSongsEmbed = new EmbedBuilder()
       .setTitle('Top requested songs')
-      .setDescription(embedDescription)
+      .setDescription(truncateLongDescription(mostRequestedDescription))
       .setColor(DEFAULT_COLOR);
 
-    return message.channel.send({
-      embeds: [topSongsEmbed],
+    const topRequesters: Array<{ count: number; requestedBy: string }> =
+      await songRequestRepository.query(
+        'SELECT COUNT(requestedBy) as "count", requestedBy from song_request GROUP BY requestedBy ORDER BY COUNT(requestedBy) DESC'
+      );
+
+    const requesters = await Promise.all(
+      topRequesters
+        .filter((r) => r.requestedBy !== 'bot')
+        .map(async (requester) => {
+          const user = await client.users.fetch(requester.requestedBy);
+          return {
+            count: requester.count,
+            user,
+          };
+        })
+    );
+
+    const requestersDescription = requesters
+      .map((r, idx) => `${idx + 1}. ${r.user.displayName} - ${r.count} times`)
+      .join('\n');
+
+    const topRequestersEmbed = new EmbedBuilder()
+      .setTitle('Top requesters')
+      .setDescription(truncateLongDescription(requestersDescription))
+      .setColor(DEFAULT_COLOR);
+
+    message.channel.send({
+      embeds: [topSongsEmbed, topRequestersEmbed],
     });
   },
 } as Command;
