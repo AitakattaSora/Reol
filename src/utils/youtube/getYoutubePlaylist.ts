@@ -4,6 +4,8 @@ import { Playlist } from '../getPlaylist';
 export async function getYoutubePlaylist(url: string): Promise<Playlist> {
   try {
     const playlist = await ytsr.getPlaylist(url);
+    if (!playlist) throw new Error('Playlist not found');
+
     const tracks = playlist.videos.map((video) => ({
       title: video.title || 'No title',
       url: video.url,
