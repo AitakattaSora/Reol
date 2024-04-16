@@ -1,4 +1,5 @@
 import retry from 'async-retry';
+import getYouTubeID from 'get-youtube-id';
 import { Track, TrackMetadata } from '../../interfaces/Track';
 import ytsr from 'youtube-sr';
 
@@ -31,7 +32,12 @@ export async function getYoutubeTrackByQuery(
 
 export async function getYoutubeTrackByURL(url: string): Promise<Track> {
   try {
-    const video = await ytsr.getVideo(url);
+    // for youtube shorts. youtube-sr doesn't support shorts, but shorts are basically videos
+    const id = getYouTubeID(url);
+    const youtubeWatchUrl = `https://www.youtube.com/watch?v=${id}`;
+    const videoUrl = id ? youtubeWatchUrl : url;
+
+    const video = await ytsr.getVideo(videoUrl);
     if (!video) throw new Error('No video found');
 
     return {
