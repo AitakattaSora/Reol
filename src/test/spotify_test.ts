@@ -2,7 +2,6 @@ import { getSimilarTrackById } from '../external/spotify/getSimilarTrack';
 import { getTrackDetails } from '../external/spotify/getTrackDetails';
 import { sessionTracks } from '../external/spotify/utils/sessionTracks';
 import { SPOTIFY_TRACK_REGEX } from '../utils/helpers';
-import { getSpotifyTrack } from '../utils/spotify/getSpotifyTrack';
 
 async function main() {
   try {
@@ -17,17 +16,31 @@ async function main() {
 
     const trackDetails = await getTrackDetails(id);
 
-    while (tracks.length < 10) {
+    sessionTracks.push(trackDetails);
+
+    while (tracks.length < 5) {
       const track = await getSimilarTrackById(currentId);
       tracks.push(track);
 
-      sessionTracks.push(track.id);
+      sessionTracks.push(track);
 
       currentId = track.id;
     }
 
     console.log(
       `Seed track: https://open.spotify.com/track/${id}: [${trackDetails.popularity}] ${trackDetails.artists[0].name} - ${trackDetails.name}\n`
+    );
+
+    console.log(
+      sessionTracks.map((st) => {
+        return {
+          id: st.id,
+          title: st.name,
+          popularity: st.popularity,
+          releaseDate: st.album.release_date,
+          releaseDatePrecision: st.album.release_date_precision,
+        };
+      })
     );
 
     console.log(
