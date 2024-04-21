@@ -1,28 +1,31 @@
-import { getAccessToken } from './getAccessToken';
+import { authToken, getAccessToken } from './getAccessToken';
 import axios from 'axios';
 
-let token: string | null = null;
-
 export async function createAxiosClient() {
-  let accessToken = token || (await getAccessToken());
-  token = accessToken;
-
   const axiosClient = axios.create({
     baseURL: 'https://api.spotify.com/v1',
     headers: {
-      Authorization: accessToken,
       'Content-Type': 'application/json',
     },
   });
 
-  axiosClient.interceptors.request.use((config) => {
-    const params = config.params;
-    if (params) {
-      console.log('params', params);
-    }
+  axiosClient.interceptors.request.use(
+    async (config) => {
+      if (
+        !authToken.accessToken ||
+        !authToken.expiresAt ||
+        Date.now() >= authToken.expiresAt
+      ) {
+        await getAccessToken();
+      }
 
-    return config;
-  });
+      config.headers['Authorization'] = authToken.accessToken;
+      return config;
+    },
+    (error) => {
+      return Promise.reject(error);
+    }
+  );
 
   axios.interceptors.response.use((response) => {
     const error = response.data.error;

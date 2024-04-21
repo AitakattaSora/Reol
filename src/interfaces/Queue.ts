@@ -48,7 +48,7 @@ export class Queue {
   private queueLock = false;
   private readyLock = false;
   private stopped = false;
-  private previousTrack: Track | null = null;
+  public radioSessionTrackIds: string[] = [];
 
   constructor(options: QueueOptions) {
     this.message = options.message;
@@ -140,27 +140,45 @@ export class Queue {
             this.tracks.push(this.tracks.shift()!);
           } else {
             this.tracks.shift();
-            if (!this.tracks.length) {
+
+            if (this.tracks.length === 0) {
               if (this.isRadio) {
-                if (!this.previousTrack) {
+                if (!this.radioSessionTrackIds.length) {
                   throw new Error(
                     'No previous track to get similar track for radio'
                   );
                 }
 
                 const spotifyTrackId =
-                  this.previousTrack.metadata?.spotifyTrackId;
-                if (!spotifyTrackId) {
-                  throw new Error(
-                    'Only spotify tracks supported for radio mode'
+                  this.radioSessionTrackIds[
+                    this.radioSessionTrackIds.length - 1
+                  ];
+
+                const spotifyTrack = await getSimilarTrackById(
+                  spotifyTrackId,
+                  this.radioSessionTrackIds
+                );
+                if (!spotifyTrack) {
+                  this.isRadio = false;
+                  this.radioSessionTrackIds = [];
+
+                  this.textChannel.send(
+                    'No similar track found for radio, stopping..'
                   );
+
+                  return this.stop();
                 }
 
-                const spotifyTrack = await getSimilarTrackById(spotifyTrackId);
                 const track = await getYoutubeTrackByQuery(spotifyTrack.title);
                 track.requestedBy = 'RADIO';
+                track.metadata = {
+                  artist: '', // todo: maybe fix later
+                  title: spotifyTrack.title,
+                  spotifyTrackId: spotifyTrack.id,
+                };
 
                 this.enqueue(track);
+                return;
               }
 
               return this.stop();
@@ -197,6 +215,18 @@ export class Queue {
     this.waitTimeout = null;
     this.stopped = false;
     this.tracks = this.tracks.concat(tracks);
+
+    if (this.isRadio) {
+      const spotifyTrackId = tracks[0].metadata?.spotifyTrackId;
+      if (!spotifyTrackId) {
+        throw new Error(
+          'No spotify track id found in metadata (razrab gayniy)'
+        );
+      }
+
+      this.radioSessionTrackIds.push(spotifyTrackId);
+    }
+
     this.processQueue();
   }
 
@@ -238,7 +268,6 @@ export class Queue {
     this.queueLock = true;
 
     const next = this.tracks[0];
-    this.previousTrack = next;
 
     try {
       const resource = await createResource(next.url);

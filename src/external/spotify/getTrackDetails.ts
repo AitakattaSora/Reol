@@ -1,6 +1,13 @@
 import { createAxiosClient } from './spotifyAxiosClient';
 
-export async function getTrackDetails(trackId: string) {
+export interface TrackDetails {
+  id: string;
+  popularity: number;
+}
+
+export async function getTrackDetails(
+  trackId: string
+): Promise<TrackDetails | null> {
   try {
     const axiosClient = await createAxiosClient();
 

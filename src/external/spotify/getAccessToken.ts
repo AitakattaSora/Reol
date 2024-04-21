@@ -1,6 +1,16 @@
 import axios from 'axios';
 import { ENV } from '../../utils/ENV';
 
+interface AuthToken {
+  accessToken: string | null;
+  expiresAt: number | null;
+}
+
+export const authToken: AuthToken = {
+  accessToken: null,
+  expiresAt: null,
+};
+
 export async function getAccessToken() {
   try {
     const clientId = ENV.SPOTIFY_CLIENT_ID;
@@ -10,7 +20,7 @@ export async function getAccessToken() {
       throw new Error('Spotify client ID or client secret is not defined.');
     }
 
-    const authToken =
+    const basicToken =
       'Basic ' + Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
 
     const response = await axios.post(
@@ -19,14 +29,15 @@ export async function getAccessToken() {
       {
         method: 'POST',
         headers: {
-          Authorization: authToken,
+          Authorization: basicToken,
         },
       }
     );
 
-    const { token_type, access_token } = response.data;
+    const { token_type, access_token, expires_in } = response.data;
 
-    return `${token_type} ${access_token}`;
+    authToken.accessToken = `${token_type} ${access_token}`;
+    authToken.expiresAt = Date.now() + expires_in * 1000 - 60000; // Refresh 1 minute before expiry
   } catch (error) {
     if (axios.isAxiosError(error)) {
       console.error('Error in API request:', error.response?.data);
