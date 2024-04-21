@@ -17,6 +17,9 @@ import client from '..';
 import { ENV } from '../utils/ENV';
 import { Track } from './Track';
 import { createResource } from '../utils/track/createResource';
+import { getTrack } from '../utils/getTrack';
+import { getSimilarTrackById } from '../external/spotify/getSimilarTrack';
+import { getYoutubeTrackByQuery } from '../utils/youtube/getYoutubeTrack';
 
 const wait = promisify(setTimeout);
 
@@ -24,6 +27,7 @@ export interface QueueOptions {
   message: Message;
   textChannel: TextChannel;
   connection: VoiceConnection;
+  isRadio?: boolean;
 }
 
 export class Queue {
@@ -39,14 +43,18 @@ export class Queue {
   public loop = false;
   public muted = false;
   public waitTimeout: NodeJS.Timeout | null;
+  public isRadio = false;
+
   private queueLock = false;
   private readyLock = false;
   private stopped = false;
+  public radioSessionTrackIds: string[] = [];
 
   constructor(options: QueueOptions) {
     this.message = options.message;
     this.connection = options.connection;
     this.textChannel = options.textChannel;
+    this.isRadio = options.isRadio || false;
 
     this.player = createAudioPlayer({
       behaviors: { noSubscriber: NoSubscriberBehavior.Play },
@@ -132,11 +140,54 @@ export class Queue {
             this.tracks.push(this.tracks.shift()!);
           } else {
             this.tracks.shift();
-            if (!this.tracks.length) return this.stop();
+
+            if (this.tracks.length === 0) {
+              if (this.isRadio) {
+                if (!this.radioSessionTrackIds.length) {
+                  throw new Error(
+                    'No previous track to get similar track for radio'
+                  );
+                }
+
+                const spotifyTrackId =
+                  this.radioSessionTrackIds[
+                    this.radioSessionTrackIds.length - 1
+                  ];
+
+                const spotifyTrack = await getSimilarTrackById(
+                  spotifyTrackId,
+                  this.radioSessionTrackIds
+                );
+                if (!spotifyTrack) {
+                  this.isRadio = false;
+                  this.radioSessionTrackIds = [];
+
+                  this.textChannel.send(
+                    'No similar track found for radio, stopping..'
+                  );
+
+                  return this.stop();
+                }
+
+                const track = await getYoutubeTrackByQuery(spotifyTrack.title);
+                track.requestedBy = 'RADIO';
+                track.metadata = {
+                  artist: '', // todo: maybe fix later
+                  title: spotifyTrack.title,
+                  spotifyTrackId: spotifyTrack.id,
+                };
+
+                this.enqueue(track);
+                return;
+              }
+
+              return this.stop();
+            }
           }
 
-          if (this.tracks.length || this.resource.audioPlayer)
+          if (this.tracks.length || this.resource.audioPlayer) {
             this.processQueue();
+          }
         } else if (
           oldState.status === AudioPlayerStatus.Buffering &&
           newState.status === AudioPlayerStatus.Playing
@@ -164,6 +215,18 @@ export class Queue {
     this.waitTimeout = null;
     this.stopped = false;
     this.tracks = this.tracks.concat(tracks);
+
+    if (this.isRadio) {
+      const spotifyTrackId = tracks[0].metadata?.spotifyTrackId;
+      if (!spotifyTrackId) {
+        throw new Error(
+          'No spotify track id found in metadata (razrab gayniy)'
+        );
+      }
+
+      this.radioSessionTrackIds.push(spotifyTrackId);
+    }
+
     this.processQueue();
   }
 
@@ -174,6 +237,7 @@ export class Queue {
     this.stopped = true;
     this.loop = false;
     this.tracks = [];
+    this.isRadio = false;
     this.player.stop();
 
     this.textChannel.send('Queue ended');
