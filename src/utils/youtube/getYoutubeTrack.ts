@@ -1,12 +1,9 @@
 import retry from 'async-retry';
 import getYouTubeID from 'get-youtube-id';
-import { Track, TrackMetadata } from '../../interfaces/Track';
+import { Track } from '../../interfaces/Track';
 import ytsr from 'youtube-sr';
 
-export async function getYoutubeTrackByQuery(
-  query: string,
-  metadata?: TrackMetadata
-): Promise<Track> {
+export async function getYoutubeTrackByQuery(query: string): Promise<Track> {
   return retry(
     async () => {
       try {
@@ -18,7 +15,6 @@ export async function getYoutubeTrackByQuery(
           title: video.title || 'No title',
           durationFormatted: video.durationFormatted,
           durationSec: video.duration / 1000,
-          metadata,
         };
       } catch (error) {
         throw error;

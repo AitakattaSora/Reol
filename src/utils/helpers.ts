@@ -2,6 +2,8 @@ export const YOUTUBE_REGEX =
   /^((?:https?:)?\/\/)?((?:www|m)\.)?((?:youtube\.com|youtu.be))(\/(?:[\w-]+\?v=|embed\/|v\/)?)([\w-]+)(\S+)?$/;
 export const SPOTIFY_REGEX =
   /^(https:\/\/open.spotify.com\/|spotify:)([a-zA-Z0-9]+)(.*)$/;
+export const SPOTIFY_TRACK_REGEX =
+  /^https:\/\/open\.spotify\.com\/track\/([0-9A-Za-z]+)/;
 
 export const YOUTUBE_PLAYLIST_REGEX = /^.*(list=)([^#\&\?]*).*/;
 
