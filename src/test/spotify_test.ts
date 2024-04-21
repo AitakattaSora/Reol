@@ -1,6 +1,5 @@
 import { getSimilarTrackById } from '../external/spotify/getSimilarTrack';
 import { getTrackDetails } from '../external/spotify/getTrackDetails';
-import { sessionTracks } from '../external/spotify/utils/sessionTracks';
 import { SPOTIFY_TRACK_REGEX } from '../utils/helpers';
 
 async function main() {
@@ -14,33 +13,20 @@ async function main() {
     const tracks = [];
     let currentId = id;
 
-    const trackDetails = await getTrackDetails(id);
+    const trackDetails: any = await getTrackDetails(id);
+    if (!trackDetails) throw new Error(`No track details found for ${id}`);
 
-    sessionTracks.push(trackDetails);
+    while (tracks.length < 1) {
+      const track = await getSimilarTrackById(currentId, [currentId]);
+      if (!track) throw new Error(`No similar track found for ${currentId}`);
 
-    while (tracks.length < 5) {
-      const track = await getSimilarTrackById(currentId);
       tracks.push(track);
-
-      sessionTracks.push(track);
 
       currentId = track.id;
     }
 
     console.log(
       `Seed track: https://open.spotify.com/track/${id}: [${trackDetails.popularity}] ${trackDetails.artists[0].name} - ${trackDetails.name}\n`
-    );
-
-    console.log(
-      sessionTracks.map((st) => {
-        return {
-          id: st.id,
-          title: st.name,
-          popularity: st.popularity,
-          releaseDate: st.album.release_date,
-          releaseDatePrecision: st.album.release_date_precision,
-        };
-      })
     );
 
     console.log(
@@ -54,7 +40,11 @@ async function main() {
         .join('\n')
     );
   } catch (error) {
-    throw error;
+    if (error instanceof Error) {
+      console.error(error.message);
+    } else {
+      console.error('Unexpected error:', error);
+    }
   }
 }
 

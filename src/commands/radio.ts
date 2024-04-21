@@ -4,8 +4,7 @@ import { joinVoiceChannel } from '@discordjs/voice';
 import { ENV } from '../utils/ENV';
 import { Command } from '../interfaces/Command';
 import { getTrack } from '../utils/getTrack';
-import { SPOTIFY_TRACK_REGEX, isPlaylist } from '../utils/helpers';
-import { saveSongRequest } from '../db/methods/saveSongRequest';
+import { SPOTIFY_TRACK_REGEX } from '../utils/helpers';
 
 export default {
   name: 'radio',
@@ -19,7 +18,9 @@ export default {
 
       const spotifyLink = args[0];
       if (!SPOTIFY_TRACK_REGEX.test(spotifyLink)) {
-        return message.reply('Invalid Spotify track URL');
+        return message.reply(
+          'Sorry, only spotify songs are supported at this moment'
+        );
       }
 
       const spotifyTrackId = spotifyLink.match(SPOTIFY_TRACK_REGEX)?.[1];
@@ -46,11 +47,6 @@ export default {
 
       const query = args.join(' ');
       const track = await getTrack(query);
-      track.requestedBy = message.author.displayName;
-
-      if (ENV.USE_DB) {
-        await saveSongRequest(track.url, track.title, message.author.id);
-      }
 
       const queue = client.queues.get(guildId);
       if (queue) {
@@ -58,11 +54,13 @@ export default {
         queue.enqueue(track);
 
         if (queue.tracks.length > 1) {
-          message.channel.send(`Added to queue: **${track.title}**`);
+          message.channel.send(`Added to radio mix: **${track.title}**`);
         }
 
         return;
       }
+
+      message.channel.send(`Starting radio based on **${track.title}**`);
 
       const newQueue = new Queue({
         message,
