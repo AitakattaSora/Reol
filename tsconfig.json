@@ -9,9 +9,9 @@
     "strict": true,
     "skipLibCheck": true,
     "strictPropertyInitialization": false,
-    "noUnusedLocals": true,
     "experimentalDecorators": true,
-    "emitDecoratorMetadata": true
-    // "noUnusedParameters": true
+    "emitDecoratorMetadata": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true
   }
 }

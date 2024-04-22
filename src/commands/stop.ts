@@ -15,7 +15,11 @@ export default {
 
       queue.stop();
 
-      message.channel.send('Music stopped');
+      if (queue.isRadio) {
+        message.channel.send('Radio mode disabled');
+      } else {
+        message.channel.send('Music stopped');
+      }
     } catch (error) {
       console.log(error);
 
