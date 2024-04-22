@@ -18,7 +18,6 @@ import { ENV } from '../utils/ENV';
 import { Track } from './Track';
 import { createResource } from '../utils/track/createResource';
 import { getSimilarTracks } from '../external/spotify/getSimilarTracks';
-import { getYoutubeTrackByQuery } from '../utils/youtube/getYoutubeTrack';
 import { findUnplayedTrack } from '../external/spotify/utils/findUnplayedTrack';
 
 const wait = promisify(setTimeout);
@@ -27,6 +26,7 @@ export interface QueueOptions {
   message: Message;
   textChannel: TextChannel;
   connection: VoiceConnection;
+  isRadio?: boolean;
 }
 
 export interface RadioSessionTrack {
@@ -48,6 +48,8 @@ export class Queue {
   public loop = false;
   public muted = false;
   public waitTimeout: NodeJS.Timeout | null;
+  public isRadio = false;
+
   private queueLock = false;
   private readyLock = false;
   private stopped = false;
@@ -57,6 +59,7 @@ export class Queue {
     this.message = options.message;
     this.connection = options.connection;
     this.textChannel = options.textChannel;
+    this.isRadio = options.isRadio || false;
 
     this.player = createAudioPlayer({
       behaviors: { noSubscriber: NoSubscriberBehavior.Play },
@@ -180,8 +183,9 @@ export class Queue {
             }
           }
 
-          if (this.tracks.length || this.resource.audioPlayer)
+          if (this.tracks.length || this.resource.audioPlayer) {
             this.processQueue();
+          }
         } else if (
           oldState.status === AudioPlayerStatus.Buffering &&
           newState.status === AudioPlayerStatus.Playing

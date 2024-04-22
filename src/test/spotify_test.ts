@@ -1,7 +1,6 @@
 import { getSimilarTracks } from '../external/spotify/getSimilarTracks';
 import { getTrackDetails } from '../external/spotify/getTrackDetails';
 import { findUnplayedTrack } from '../external/spotify/utils/findUnplayedTrack';
-import { RadioSessionTrack } from '../interfaces/Queue';
 import { SPOTIFY_TRACK_REGEX } from '../utils/helpers';
 import { getYoutubeTrackByQuery } from '../utils/youtube/getYoutubeTrack';
 
@@ -13,7 +12,7 @@ async function main() {
     const id = url.match(SPOTIFY_TRACK_REGEX)?.[1];
     if (!id) throw new Error('Invalid Spotify track URL');
 
-    const playedTracks: RadioSessionTrack[] = [];
+    const playedTracks = [];
     let currentId = id;
 
     const trackDetails: any = await getTrackDetails(id);
