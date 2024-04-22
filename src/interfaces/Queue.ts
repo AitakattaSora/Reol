@@ -17,6 +17,9 @@ import client from '..';
 import { ENV } from '../utils/ENV';
 import { Track } from './Track';
 import { createResource } from '../utils/track/createResource';
+import { getSimilarTracks } from '../external/spotify/getSimilarTracks';
+import { getYoutubeTrackByQuery } from '../utils/youtube/getYoutubeTrack';
+import { findUnplayedTrack } from '../external/spotify/utils/findUnplayedTrack';
 
 const wait = promisify(setTimeout);
 
@@ -24,6 +27,12 @@ export interface QueueOptions {
   message: Message;
   textChannel: TextChannel;
   connection: VoiceConnection;
+}
+
+export interface RadioSessionTrack {
+  spotifyId: string;
+  title: string;
+  youtubeUrl: string;
 }
 
 export class Queue {
@@ -42,6 +51,7 @@ export class Queue {
   private queueLock = false;
   private readyLock = false;
   private stopped = false;
+  public radioSessionTracks: RadioSessionTrack[] = [];
 
   constructor(options: QueueOptions) {
     this.message = options.message;
@@ -53,10 +63,7 @@ export class Queue {
     });
     this.connection.subscribe(this.player);
 
-    const networkStateChangeHandler = (
-      oldNetworkState: any,
-      newNetworkState: any
-    ) => {
+    const networkStateChangeHandler = (_: any, newNetworkState: any) => {
       const newUdp = Reflect.get(newNetworkState, 'udp');
       clearInterval(newUdp?.keepAliveInterval);
     };
@@ -132,7 +139,45 @@ export class Queue {
             this.tracks.push(this.tracks.shift()!);
           } else {
             this.tracks.shift();
-            if (!this.tracks.length) return this.stop();
+
+            if (this.tracks.length === 0) {
+              if (this.isRadio) {
+                if (!this.radioSessionTracks.length) {
+                  throw new Error(
+                    'No previous track to get similar track for radio'
+                  );
+                }
+
+                const spotifyTrackId =
+                  this.radioSessionTracks[this.radioSessionTracks.length - 1]
+                    .spotifyId;
+
+                const spotifyTracks = await getSimilarTracks(
+                  spotifyTrackId,
+                  this.radioSessionTracks
+                );
+
+                const unplayedTrack = await findUnplayedTrack(
+                  spotifyTracks,
+                  this.radioSessionTracks
+                );
+
+                if (!unplayedTrack) {
+                  this.isRadio = false;
+                  this.radioSessionTracks = [];
+
+                  this.textChannel.send(
+                    'No similar track found for radio, stopping..'
+                  );
+
+                  return this.stop();
+                }
+
+                return this.enqueue(unplayedTrack);
+              }
+
+              return this.stop();
+            }
           }
 
           if (this.tracks.length || this.resource.audioPlayer)
@@ -164,6 +209,22 @@ export class Queue {
     this.waitTimeout = null;
     this.stopped = false;
     this.tracks = this.tracks.concat(tracks);
+
+    if (this.isRadio) {
+      const spotifyTrackId = tracks[0].metadata?.spotifyTrackId;
+      if (!spotifyTrackId) {
+        throw new Error(
+          'No spotify track id found in metadata (razrab gayniy)'
+        );
+      }
+
+      this.radioSessionTracks.push({
+        spotifyId: spotifyTrackId,
+        title: tracks[0].title,
+        youtubeUrl: tracks[0].url,
+      });
+    }
+
     this.processQueue();
   }
 
@@ -174,6 +235,9 @@ export class Queue {
     this.stopped = true;
     this.loop = false;
     this.tracks = [];
+    this.isRadio = false;
+    this.radioSessionTracks = [];
+
     this.player.stop();
 
     this.textChannel.send('Queue ended');
