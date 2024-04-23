@@ -145,40 +145,46 @@ export class Queue {
 
             if (this.tracks.length === 0) {
               if (this.isRadio) {
-                if (!this.radioSessionTracks.length) {
-                  throw new Error(
-                    'No previous track to get similar track for radio'
-                  );
-                }
+                try {
+                  if (!this.radioSessionTracks.length) {
+                    throw new Error(
+                      'No previous track to get similar track for radio'
+                    );
+                  }
 
-                const spotifyTrackId =
-                  this.radioSessionTracks[this.radioSessionTracks.length - 1]
-                    .spotifyId;
+                  const spotifyTrackId =
+                    this.radioSessionTracks[this.radioSessionTracks.length - 1]
+                      .spotifyId;
 
-                const spotifyTracks = await getSimilarTracks(
-                  spotifyTrackId,
-                  this.radioSessionTracks
-                );
-
-                const unplayedTrack = await findUnplayedTrack(
-                  spotifyTracks,
-                  this.radioSessionTracks
-                );
-
-                console.log('Similar track result:', unplayedTrack);
-
-                if (!unplayedTrack) {
-                  this.isRadio = false;
-                  this.radioSessionTracks = [];
-
-                  this.textChannel.send(
-                    'No similar track found for radio, stopping..'
+                  const spotifyTracks = await getSimilarTracks(
+                    spotifyTrackId,
+                    this.radioSessionTracks
                   );
 
-                  return this.stop();
-                }
+                  const unplayedTrack = await findUnplayedTrack(
+                    spotifyTracks,
+                    this.radioSessionTracks
+                  );
 
-                return this.enqueue(unplayedTrack);
+                  console.log('Similar track result:', unplayedTrack);
+
+                  if (!unplayedTrack) {
+                    this.isRadio = false;
+                    this.radioSessionTracks = [];
+
+                    this.textChannel.send(
+                      'No similar track found for radio, stopping..'
+                    );
+
+                    return this.stop();
+                  }
+
+                  return this.enqueue(unplayedTrack);
+                } catch (error: any) {
+                  return this.textChannel.send(
+                    error?.message || 'An error occurred'
+                  );
+                }
               }
 
               return this.stop();

@@ -12,8 +12,9 @@ export async function findUnplayedTrack(
   playedTracks: RadioSessionTrack[]
 ): Promise<Track | null> {
   for (const spotifyTrack of recommendations) {
-    const query = spotifyTrack.title;
-    const youtubeTrack = await getYoutubeTrackByQuery(query);
+    const youtubeTrack = await getYoutubeTrackByQuery(
+      spotifyTrack.title + ' lyrics'
+    );
 
     const isTrackPlayed = playedTracks.some((pt) => {
       return (
