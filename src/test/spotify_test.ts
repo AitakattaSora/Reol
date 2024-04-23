@@ -1,8 +1,13 @@
 import { getSimilarTracks } from '../external/spotify/getSimilarTracks';
 import { getTrackDetails } from '../external/spotify/getTrackDetails';
 import { findUnplayedTrack } from '../external/spotify/utils/findUnplayedTrack';
+import { getSpotifyTrackTitle } from '../external/spotify/utils/getSpotifyTrackTitle';
 import { SPOTIFY_TRACK_REGEX } from '../utils/helpers';
 import { getYoutubeTrackByQuery } from '../utils/youtube/getYoutubeTrack';
+
+async function delay(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 async function main() {
   try {
@@ -25,25 +30,24 @@ async function main() {
     playedTracks.push({
       spotifyId: currentId,
       youtubeUrl: youtubeTrack.url,
-      title: `${trackDetails.artists[0].name} - ${trackDetails.name}`,
+      title: getSpotifyTrackTitle(trackDetails),
     });
 
-    while (playedTracks.length < 3) {
-      console.log(playedTracks);
-
+    while (playedTracks.length < 5) {
       const spotifyTracks = await getSimilarTracks(currentId, playedTracks);
-
       const unplayedTrack = await findUnplayedTrack(
         spotifyTracks,
         playedTracks
       );
 
+      await delay(2000);
+
       if (!unplayedTrack) throw new Error('No unplayed track found');
 
       playedTracks.push({
-        spotifyId: currentId,
+        spotifyId: unplayedTrack.metadata?.spotifyTrackId || '',
         youtubeUrl: unplayedTrack.url,
-        title: unplayedTrack.title,
+        title: unplayedTrack.metadata?.title || '',
       });
       const spotifyTrackId = unplayedTrack.metadata?.spotifyTrackId;
       if (!spotifyTrackId) throw new Error('No Spotify track ID found');
@@ -51,13 +55,9 @@ async function main() {
       currentId = spotifyTrackId;
     }
 
-    console.log(
-      `Seed track: https://open.spotify.com/track/${id}: [${trackDetails.popularity}] ${trackDetails.artists[0].name} - ${trackDetails.name}\n`
-    );
-
     for (const track of playedTracks) {
       console.log(
-        `https://open.spotify.com/track/${track.spotifyId}: ${track.title}`
+        `https://open.spotify.com/track/${track.spotifyId}: ${track.title} - ${track.youtubeUrl}`
       );
     }
   } catch (error) {

@@ -165,6 +165,8 @@ export class Queue {
                   this.radioSessionTracks
                 );
 
+                console.log('Similar track result:', unplayedTrack);
+
                 if (!unplayedTrack) {
                   this.isRadio = false;
                   this.radioSessionTracks = [];
