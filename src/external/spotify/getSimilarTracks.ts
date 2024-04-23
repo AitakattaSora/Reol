@@ -13,8 +13,6 @@ export async function getSimilarTracks(
   radioSessionTrack: RadioSessionTrack[]
 ): Promise<SpotifyTrack[]> {
   try {
-    console.log(radioSessionTrack);
-
     const trackFeatures = await getTrackFeatures(id);
     if (!trackFeatures) {
       throw new Error(`Unable to get track features for ${id}`);
@@ -44,8 +42,6 @@ export async function getSimilarTracks(
       id: t.id,
       title: getSpotifyTrackTitle(t),
     }));
-
-    console.log({ tracks });
 
     return tracks;
   } catch (error) {

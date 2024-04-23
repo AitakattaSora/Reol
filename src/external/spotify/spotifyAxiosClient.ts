@@ -10,8 +10,8 @@ export async function createAxiosClient() {
   });
 
   axiosClient.interceptors.request.use((config) => {
-    if (config.params) {
-      console.log('Request params:', config.params);
+    if (config.url === '/recommendations') {
+      console.log('Getting similar track with these params:', config.params);
     }
 
     return config;
