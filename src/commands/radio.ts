@@ -46,7 +46,7 @@ export default {
       if (!guildId) throw new GuildNotFoundError();
 
       const query = args.join(' ');
-      const track = await getTrack(query);
+      const track = await getTrack(query + ' lyrics');
 
       const queue = client.queues.get(guildId);
       if (queue) {

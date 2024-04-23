@@ -34,7 +34,9 @@ export async function getSimilarTracks(
         target_energy: trackFeatures.energy,
         target_valence: trackFeatures.valence,
         target_tempo: trackFeatures.tempo,
-        target_popularity: trackDetails.popularity,
+        ...(trackDetails.popularity > 50
+          ? { target_popularity: trackDetails.popularity }
+          : { min_popularity: 50 }),
       },
     });
 
