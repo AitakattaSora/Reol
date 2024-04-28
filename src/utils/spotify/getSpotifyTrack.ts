@@ -7,10 +7,10 @@ import { getTrackDetails } from '../../external/spotify/getTrackDetails';
 export async function getSpotifyTrack(url: string): Promise<Track> {
   return retry(async () => {
     try {
-      const data = await getTrackDetails(url);
+      const details = await getTrackDetails(url);
 
-      const artist = data?.artist || '';
-      const title = data?.title || '';
+      const artist = details?.artists?.[0]?.name || '';
+      const title = details?.name || '';
 
       const track = await getYoutubeTrackByQuery(`${artist} - ${title}`);
 
