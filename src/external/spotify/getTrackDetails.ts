@@ -2,7 +2,12 @@ import { spotifyFetch } from './spotifyAxiosClient';
 
 export interface TrackDetails {
   id: string;
+  name: string;
   popularity: number;
+  artists: {
+    id: string;
+    name: string;
+  }[];
 }
 
 export async function getTrackDetails(
