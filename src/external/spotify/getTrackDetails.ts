@@ -1,4 +1,4 @@
-import { createAxiosClient } from './spotifyAxiosClient';
+import { spotifyFetch } from './spotifyAxiosClient';
 
 export interface TrackDetails {
   id: string;
@@ -9,12 +9,11 @@ export async function getTrackDetails(
   trackId: string
 ): Promise<TrackDetails | null> {
   try {
-    const axiosClient = await createAxiosClient();
+    const details = await spotifyFetch(`/tracks/${trackId}`);
 
-    const response = await axiosClient.get(`/tracks/${trackId}`);
-    return response.data;
+    return details;
   } catch (error) {
     console.error('Failed to fetch track details:', error);
-    return null;
+    throw error;
   }
 }

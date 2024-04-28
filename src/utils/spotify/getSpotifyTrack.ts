@@ -1,14 +1,13 @@
 import retry from 'async-retry';
 import { Track } from '../../interfaces/Track';
 import { getYoutubeTrackByQuery } from '../youtube/getYoutubeTrack';
-import fetch from 'isomorphic-unfetch';
 import { SPOTIFY_TRACK_REGEX } from '../helpers';
-const { getPreview } = require('spotify-url-info')(fetch);
+import { getTrackDetails } from '../../external/spotify/getTrackDetails';
 
 export async function getSpotifyTrack(url: string): Promise<Track> {
   return retry(async () => {
     try {
-      const data = await getPreview(url);
+      const data = await getTrackDetails(url);
 
       const artist = data?.artist || '';
       const title = data?.title || '';
