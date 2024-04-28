@@ -1,8 +1,8 @@
 import { TrackDetails, getTrackDetails } from './getTrackDetails';
-import { createAxiosClient } from './spotifyAxiosClient';
 import { getSpotifyTrackTitle } from './utils/getSpotifyTrackTitle';
 import { getTrackFeatures } from './getTrackFeatures';
 import { RadioSessionTrack } from '../../interfaces/Queue';
+import { spotifyFetch } from './spotifyAxiosClient';
 
 interface SpotifyTrack extends TrackDetails {
   title: string;
@@ -23,8 +23,7 @@ export async function getSimilarTracks(
       throw new Error(`Unable to get track details for ${id}`);
     }
 
-    const spotifyClient = await createAxiosClient();
-    const response = await spotifyClient.get('/recommendations', {
+    const data = await spotifyFetch('/recommendations', {
       params: {
         seed_tracks: radioSessionTrack
           .slice(-5)
@@ -40,7 +39,7 @@ export async function getSimilarTracks(
       },
     });
 
-    const tracks = (response?.data?.tracks || []).map((t: any) => ({
+    const tracks = (data?.tracks || []).map((t: any) => ({
       id: t.id,
       title: getSpotifyTrackTitle(t),
     }));

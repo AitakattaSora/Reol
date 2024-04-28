@@ -33,7 +33,7 @@ async function main() {
       title: getSpotifyTrackTitle(trackDetails),
     });
 
-    while (playedTracks.length < 5) {
+    while (playedTracks.length < 2) {
       const spotifyTracks = await getSimilarTracks(currentId, playedTracks);
       const unplayedTrack = await findUnplayedTrack(
         spotifyTracks,
