@@ -21,7 +21,7 @@ export async function getYoutubeTrackByQuery(query: string): Promise<Track> {
       }
     },
     {
-      retries: 1,
+      retries: 2,
     }
   );
 }

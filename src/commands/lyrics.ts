@@ -42,9 +42,10 @@ export default {
       const track = queue.tracks[0];
 
       const lyrics = await getLyrics({
-        query: track.metadata
-          ? `${track.metadata.artist} - ${track.metadata.title}`
-          : cleanYoutubeTitle(track.title),
+        query:
+          track.metadata?.artist && track.metadata?.title
+            ? `${track.metadata.artist} - ${track.metadata.title}`
+            : cleanYoutubeTitle(track.title),
         title: track.metadata?.title,
       });
       const lyric = lyrics[0];

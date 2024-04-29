@@ -21,6 +21,10 @@ export function isSpotifyURL(url: string): boolean {
   return SPOTIFY_REGEX.test(url);
 }
 
+export function isSpotifyTrackURL(url: string): boolean {
+  return SPOTIFY_TRACK_REGEX.test(url);
+}
+
 export function isPlaylist(url: string): boolean {
   return (
     URL_REGEX.test(url) &&

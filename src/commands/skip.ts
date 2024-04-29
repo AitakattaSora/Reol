@@ -2,7 +2,7 @@ import { Command } from '../interfaces/Command';
 
 export default {
   name: 'skip',
-  aliases: ['s'],
+  aliases: ['sk'],
   description: 'Skip the current track',
   async execute(client, message) {
     try {

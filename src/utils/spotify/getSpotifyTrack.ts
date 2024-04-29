@@ -7,6 +7,11 @@ import { getTrackDetails } from '../../external/spotify/getTrackDetails';
 export async function getSpotifyTrack(url: string): Promise<Track> {
   return retry(async () => {
     try {
+      const spotifyTrackId = url.match(SPOTIFY_TRACK_REGEX)?.[1];
+      if (!spotifyTrackId) {
+        throw new Error('Invalid spotify track id');
+      }
+
       const details = await getTrackDetails(url);
 
       const artist = details?.artists?.[0]?.name || '';

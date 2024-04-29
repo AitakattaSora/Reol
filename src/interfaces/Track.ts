@@ -8,7 +8,7 @@ export interface Track {
 }
 
 export interface TrackMetadata {
-  artist: string;
-  title: string;
+  artist?: string;
+  title?: string;
   spotifyTrackId?: string;
 }

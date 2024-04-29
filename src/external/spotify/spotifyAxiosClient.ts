@@ -1,6 +1,6 @@
 import { authToken, getAccessToken } from './getAccessToken';
 import retry from 'async-retry';
-import axios from 'axios';
+import axios, { AxiosRequestConfig } from 'axios';
 
 const spotifyClient = axios.create({
   baseURL: 'https://api.spotify.com/v1',
@@ -54,11 +54,11 @@ spotifyClient.interceptors.response.use(
   }
 );
 
-export async function spotifyFetch(url: string, params?: any) {
+export async function spotifyFetch(url: string, config?: AxiosRequestConfig) {
   return await retry(
     async (bail) => {
       try {
-        const response = await spotifyClient.get(url, params);
+        const response = await spotifyClient.get(url, config);
 
         return response.data;
       } catch (error: any) {
