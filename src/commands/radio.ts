@@ -4,7 +4,10 @@ import { joinVoiceChannel } from '@discordjs/voice';
 import { ENV } from '../utils/ENV';
 import { Command } from '../interfaces/Command';
 import { getTrack } from '../utils/getTrack';
-import { SPOTIFY_TRACK_REGEX } from '../utils/helpers';
+import { isSpotifyURL } from '../utils/helpers';
+import { getSpotifyTrackId } from '../utils/spotify/getSpotifyTrackId';
+import { getTrackDetails } from '../external/spotify/getTrackDetails';
+import { getSpotifyTrackTitle } from '../external/spotify/utils/getSpotifyTrackTitle';
 
 export default {
   name: 'radio',
@@ -14,18 +17,6 @@ export default {
     try {
       if (!args?.length) {
         return message.reply('Please a spotify song link');
-      }
-
-      const spotifyLink = args[0];
-      if (!SPOTIFY_TRACK_REGEX.test(spotifyLink)) {
-        return message.reply(
-          'Sorry, only spotify songs are supported at this moment'
-        );
-      }
-
-      const spotifyTrackId = spotifyLink.match(SPOTIFY_TRACK_REGEX)?.[1];
-      if (!spotifyTrackId) {
-        return message.reply('Invalid Spotify track URL');
       }
 
       if (!message.channel) {
@@ -46,7 +37,27 @@ export default {
       if (!guildId) throw new GuildNotFoundError();
 
       const query = args.join(' ');
-      const track = await getTrack(query + ' lyrics');
+
+      const spotifyTrackId = await getSpotifyTrackId(query);
+      if (!spotifyTrackId) {
+        return message.reply(`Unable find spotify track from: ${query}`);
+      }
+
+      const spotifyTrack = await getTrackDetails(spotifyTrackId);
+      const spotifyTrackTitle = getSpotifyTrackTitle(spotifyTrack);
+      const track = await getTrack(
+        isSpotifyURL(query) ? `${spotifyTrackTitle} lyrics` : query
+      );
+
+      if (!spotifyTrack) {
+        throw new Error(`Unable to get spotify track for ${spotifyTrackId}`);
+      }
+
+      track.metadata = {
+        artist: spotifyTrack.artists[0].name,
+        title: spotifyTrack.name,
+        spotifyTrackId,
+      };
 
       const queue = client.queues.get(guildId);
       if (queue) {
