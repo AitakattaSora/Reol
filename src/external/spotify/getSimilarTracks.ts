@@ -23,8 +23,6 @@ export async function getSimilarTracks(
       throw new Error(`Unable to get track details for ${id}`);
     }
 
-    console.log({ tracks: radioSession.tracks });
-
     const data = await spotifyFetch('/recommendations', {
       params: {
         seed_tracks: radioSession.tracks
