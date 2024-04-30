@@ -23,20 +23,30 @@ export async function getSimilarTracks(
       throw new Error(`Unable to get track details for ${id}`);
     }
 
+    const requestParams: Record<string, string | number> = {
+      seed_tracks: radioSession.tracks
+        .slice(-5)
+        .reverse()
+        .map((rt) => rt.spotifyId)
+        .join(','),
+    };
+
+    const MIN_POPULARITY = 50;
+    if (trackDetails.popularity - 10 > MIN_POPULARITY) {
+      requestParams.min_popularity = trackDetails.popularity - 10;
+    } else {
+      requestParams.min_popularity = MIN_POPULARITY;
+    }
+
+    if (radioSession.tracks.length < 5) {
+      requestParams.target_danceability = trackFeatures.danceability;
+      requestParams.target_energy = trackFeatures.energy;
+      requestParams.target_valence = trackFeatures.valence;
+      requestParams.target_tempo = trackFeatures.tempo;
+    }
+
     const data = await spotifyFetch('/recommendations', {
-      params: {
-        seed_tracks: radioSession.tracks
-          .slice(-5)
-          .map((rt) => rt.spotifyId)
-          .join(','),
-        target_danceability: trackFeatures.danceability,
-        target_energy: trackFeatures.energy,
-        target_valence: trackFeatures.valence,
-        target_tempo: trackFeatures.tempo,
-        ...(trackDetails.popularity > 50
-          ? { target_popularity: trackDetails.popularity }
-          : { min_popularity: 50 }),
-      },
+      params: requestParams,
     });
 
     const tracks = (data?.tracks || []).map((t: any) => ({
