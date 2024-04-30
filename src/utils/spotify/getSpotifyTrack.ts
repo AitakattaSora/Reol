@@ -12,7 +12,7 @@ export async function getSpotifyTrack(url: string): Promise<Track> {
         throw new Error('Invalid spotify track id');
       }
 
-      const details = await getTrackDetails(url);
+      const details = await getTrackDetails(spotifyTrackId);
 
       const artist = details?.artists?.[0]?.name || '';
       const title = details?.name || '';
