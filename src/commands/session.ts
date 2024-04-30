@@ -5,7 +5,7 @@ import { ENV } from '../utils/ENV';
 import { DEFAULT_COLOR } from '../utils/helpers';
 
 export default {
-  name: 'history',
+  name: 'session',
   description: 'Show radio session history',
   async execute(client, message, args) {
     try {
@@ -60,7 +60,9 @@ export default {
 
       const queueEmbed = new EmbedBuilder();
       queueEmbed
-        .setDescription('Radio session history')
+        .setDescription(
+          `Radio session history (${radioSessionTracks.length} tracks)`
+        )
         .setColor(DEFAULT_COLOR);
 
       radioSessionTracks
@@ -84,7 +86,7 @@ export default {
             name: `Page ${page} of ${pages}`,
           })
           .setFooter({
-            text: `${ENV.PREFIX}history <page> to view a specific page`,
+            text: `${ENV.PREFIX}session <page> to view a specific page`,
           });
       }
 
