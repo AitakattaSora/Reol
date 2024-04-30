@@ -15,8 +15,7 @@ export default {
 
       queue.stop();
 
-      queue.isRadio = false;
-      queue.radioSessionTracks = [];
+      queue.stopRadio();
 
       if (queue.isRadio) {
         message.channel.send('Radio mode disabled');

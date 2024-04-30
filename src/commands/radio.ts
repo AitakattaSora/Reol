@@ -71,7 +71,7 @@ export default {
         return;
       }
 
-      message.channel.send(`Starting radio based on **${track.title}**`);
+      message.channel.send(`Starting radio based on **${spotifyTrackTitle}**`);
 
       const newQueue = new Queue({
         message,

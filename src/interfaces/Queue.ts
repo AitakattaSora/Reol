@@ -29,10 +29,15 @@ export interface QueueOptions {
   isRadio?: boolean;
 }
 
-export interface RadioSessionTrack {
+interface RadioSessionTrack {
   spotifyId: string;
   title: string;
   youtubeUrl: string;
+}
+
+export interface RadioSession {
+  tracks: RadioSessionTrack[];
+  skippedTracks: RadioSessionTrack[];
 }
 
 export class Queue {
@@ -53,13 +58,14 @@ export class Queue {
   private queueLock = false;
   private readyLock = false;
   private stopped = false;
-  public radioSessionTracks: RadioSessionTrack[] = [];
+  public radioSession: RadioSession;
 
   constructor(options: QueueOptions) {
     this.message = options.message;
     this.connection = options.connection;
     this.textChannel = options.textChannel;
     this.isRadio = options.isRadio || false;
+    this.radioSession = { tracks: [], skippedTracks: [] };
 
     this.player = createAudioPlayer({
       behaviors: { noSubscriber: NoSubscriberBehavior.Play },
@@ -146,31 +152,31 @@ export class Queue {
             if (this.tracks.length === 0) {
               if (this.isRadio) {
                 try {
-                  if (!this.radioSessionTracks.length) {
+                  if (!this.radioSession.tracks.length) {
                     throw new Error(
                       'No previous track to get similar track for radio'
                     );
                   }
 
                   const spotifyTrackId =
-                    this.radioSessionTracks[this.radioSessionTracks.length - 1]
-                      .spotifyId;
+                    this.radioSession.tracks[
+                      this.radioSession.tracks.length - 1
+                    ].spotifyId;
 
                   const spotifyTracks = await getSimilarTracks(
                     spotifyTrackId,
-                    this.radioSessionTracks
+                    this.radioSession
                   );
 
                   const unplayedTrack = await findUnplayedTrack(
                     spotifyTracks,
-                    this.radioSessionTracks
+                    this.radioSession
                   );
 
                   console.log('Similar track result:', unplayedTrack);
 
                   if (!unplayedTrack) {
-                    this.isRadio = false;
-                    this.radioSessionTracks = [];
+                    this.stopRadio();
 
                     this.textChannel.send(
                       'No similar track found for radio, stopping..'
@@ -178,6 +184,8 @@ export class Queue {
 
                     return this.stop();
                   }
+
+                  unplayedTrack.requestedBy = 'Radio';
 
                   return this.enqueue(unplayedTrack);
                 } catch (error: any) {
@@ -216,6 +224,11 @@ export class Queue {
     });
   }
 
+  public stopRadio() {
+    this.isRadio = false;
+    this.radioSession = { tracks: [], skippedTracks: [] };
+  }
+
   public enqueue(...tracks: Track[]) {
     if (this.waitTimeout !== null) clearTimeout(this.waitTimeout);
     this.waitTimeout = null;
@@ -230,7 +243,7 @@ export class Queue {
         );
       }
 
-      this.radioSessionTracks.push({
+      this.radioSession.tracks.push({
         spotifyId: spotifyTrackId,
         title: tracks[0].title,
         youtubeUrl: tracks[0].url,
@@ -247,9 +260,8 @@ export class Queue {
     this.stopped = true;
     this.loop = false;
     this.tracks = [];
-    this.isRadio = false;
-    this.radioSessionTracks = [];
 
+    this.stopRadio();
     this.player.stop();
 
     this.textChannel.send('Queue ended');

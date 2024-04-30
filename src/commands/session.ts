@@ -17,7 +17,7 @@ export default {
         return message.channel.send('There is no queue.');
       }
 
-      const radioSessionTracks = queue.radioSessionTracks;
+      const radioSessionTracks = queue.radioSession.tracks || [];
       if (!radioSessionTracks.length) {
         return message.channel.send('There is no radio session history.');
       }

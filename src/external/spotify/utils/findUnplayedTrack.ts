@@ -1,4 +1,4 @@
-import { RadioSessionTrack } from '../../../interfaces/Queue';
+import { RadioSession } from '../../../interfaces/Queue';
 import { Track } from '../../../interfaces/Track';
 import { getYoutubeTrackByQuery } from '../../../utils/youtube/getYoutubeTrack';
 
@@ -9,14 +9,26 @@ interface SpotifyTrack {
 
 export async function findUnplayedTrack(
   recommendations: SpotifyTrack[],
-  playedTracks: RadioSessionTrack[]
+  radioSession: RadioSession
 ): Promise<Track | null> {
   for (const spotifyTrack of recommendations) {
     const youtubeTrack = await getYoutubeTrackByQuery(
       spotifyTrack.title + ' lyrics'
     );
 
-    const isTrackPlayed = playedTracks.some((pt) => {
+    const isTrackSkipped = radioSession.skippedTracks.some((pt) => {
+      return (
+        pt.youtubeUrl === youtubeTrack.url ||
+        pt.title === spotifyTrack.title ||
+        pt.spotifyId === spotifyTrack.id
+      );
+    });
+
+    if (isTrackSkipped) {
+      continue;
+    }
+
+    const isTrackPlayed = radioSession.tracks.some((pt) => {
       return (
         pt.youtubeUrl === youtubeTrack.url ||
         pt.title === spotifyTrack.title ||

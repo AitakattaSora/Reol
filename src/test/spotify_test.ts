@@ -2,6 +2,7 @@ import { getSimilarTracks } from '../external/spotify/getSimilarTracks';
 import { getTrackDetails } from '../external/spotify/getTrackDetails';
 import { findUnplayedTrack } from '../external/spotify/utils/findUnplayedTrack';
 import { getSpotifyTrackTitle } from '../external/spotify/utils/getSpotifyTrackTitle';
+import { RadioSession } from '../interfaces/Queue';
 import { SPOTIFY_TRACK_REGEX } from '../utils/helpers';
 import { getYoutubeTrackByQuery } from '../utils/youtube/getYoutubeTrack';
 
@@ -17,7 +18,6 @@ async function main() {
     const id = url.match(SPOTIFY_TRACK_REGEX)?.[1];
     if (!id) throw new Error('Invalid Spotify track URL');
 
-    const playedTracks = [];
     let currentId = id;
 
     const trackDetails: any = await getTrackDetails(id);
@@ -27,24 +27,29 @@ async function main() {
       `${trackDetails.artists[0].name} - ${trackDetails.name}`
     );
 
-    playedTracks.push({
+    const radioSession: RadioSession = {
+      tracks: [],
+      skippedTracks: [],
+    };
+
+    radioSession.tracks.push({
       spotifyId: currentId,
       youtubeUrl: youtubeTrack.url,
       title: getSpotifyTrackTitle(trackDetails),
     });
 
-    while (playedTracks.length < 2) {
-      const spotifyTracks = await getSimilarTracks(currentId, playedTracks);
+    while (radioSession.tracks.length < 2) {
+      const spotifyTracks = await getSimilarTracks(currentId, radioSession);
       const unplayedTrack = await findUnplayedTrack(
         spotifyTracks,
-        playedTracks
+        radioSession
       );
 
       await delay(2000);
 
       if (!unplayedTrack) throw new Error('No unplayed track found');
 
-      playedTracks.push({
+      radioSession.tracks.push({
         spotifyId: unplayedTrack.metadata?.spotifyTrackId || '',
         youtubeUrl: unplayedTrack.url,
         title: unplayedTrack.metadata?.title || '',
@@ -55,7 +60,7 @@ async function main() {
       currentId = spotifyTrackId;
     }
 
-    for (const track of playedTracks) {
+    for (const track of radioSession.tracks) {
       console.log(
         `https://open.spotify.com/track/${track.spotifyId}: ${track.title} - ${track.youtubeUrl}`
       );
