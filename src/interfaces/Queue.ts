@@ -17,8 +17,8 @@ import client from '..';
 import { ENV } from '../utils/ENV';
 import { Track } from './Track';
 import { createResource } from '../utils/track/createResource';
-import { getSimilarTracks } from '../external/spotify/getSimilarTracks';
-import { findUnplayedTrack } from '../external/spotify/utils/findUnplayedTrack';
+import { getRadioSessionUnplayedTracks } from '../utils/radio/getRadioSessionUnplayedTracks';
+import { getTrack } from '../utils/getTrack';
 
 const wait = promisify(setTimeout);
 
@@ -29,15 +29,14 @@ export interface QueueOptions {
   isRadio?: boolean;
 }
 
-interface RadioSessionTrack {
+export interface RadioSessionTrack {
   spotifyId: string;
   title: string;
-  youtubeUrl: string;
 }
 
 export interface RadioSession {
-  tracks: RadioSessionTrack[];
-  skippedTracks: RadioSessionTrack[];
+  tracks: RadioSessionTrack[]; // recommendataions
+  playedTracks: RadioSessionTrack[];
 }
 
 export class Queue {
@@ -65,7 +64,10 @@ export class Queue {
     this.connection = options.connection;
     this.textChannel = options.textChannel;
     this.isRadio = options.isRadio || false;
-    this.radioSession = { tracks: [], skippedTracks: [] };
+    this.radioSession = {
+      tracks: [],
+      playedTracks: [],
+    };
 
     this.player = createAudioPlayer({
       behaviors: { noSubscriber: NoSubscriberBehavior.Play },
@@ -151,48 +153,8 @@ export class Queue {
 
             if (this.tracks.length === 0) {
               if (this.isRadio) {
-                try {
-                  if (!this.radioSession.tracks.length) {
-                    throw new Error(
-                      'No previous track to get similar track for radio'
-                    );
-                  }
-
-                  const spotifyTrackId =
-                    this.radioSession.tracks[
-                      this.radioSession.tracks.length - 1
-                    ].spotifyId;
-
-                  const spotifyTracks = await getSimilarTracks(
-                    spotifyTrackId,
-                    this.radioSession
-                  );
-
-                  const unplayedTrack = await findUnplayedTrack(
-                    spotifyTracks,
-                    this.radioSession
-                  );
-
-                  console.log('Similar track result:', unplayedTrack);
-
-                  if (!unplayedTrack) {
-                    this.stopRadio();
-
-                    this.textChannel.send(
-                      'No similar track found for radio, stopping..'
-                    );
-
-                    return this.stop();
-                  }
-
-                  unplayedTrack.requestedBy = 'Radio';
-
-                  return this.enqueue(unplayedTrack);
-                } catch (error: any) {
-                  return this.textChannel.send(
-                    error?.message || 'An error occurred'
-                  );
-                }
+                this.processRadio();
+                return;
               }
 
               return this.stop();
@@ -224,9 +186,36 @@ export class Queue {
     });
   }
 
+  public async processRadio() {
+    try {
+      const unplayedTracks = getRadioSessionUnplayedTracks(this.radioSession);
+      if (!unplayedTracks) throw new Error('Radio is over.');
+
+      const unplayedTrack = unplayedTracks[0];
+      const track = await getTrack(unplayedTrack.title + ' lyrics');
+
+      if (!track) throw new Error('No track found');
+
+      track.metadata = {
+        artist: '',
+        title: unplayedTrack.title,
+        isRadio: true,
+        spotifyTrackId: unplayedTrack.spotifyId,
+      };
+
+      this.radioSession.playedTracks.push(unplayedTracks[0]);
+      this.enqueue(track);
+    } catch (error: any) {
+      return this.textChannel.send(error?.message || 'An error occurred');
+    }
+  }
+
   public stopRadio() {
     this.isRadio = false;
-    this.radioSession = { tracks: [], skippedTracks: [] };
+    this.radioSession = {
+      tracks: [],
+      playedTracks: [],
+    };
   }
 
   public enqueue(...tracks: Track[]) {
@@ -235,18 +224,16 @@ export class Queue {
     this.stopped = false;
     this.tracks = this.tracks.concat(tracks);
 
-    if (this.isRadio) {
-      const spotifyTrackId = tracks[0].metadata?.spotifyTrackId;
-      if (!spotifyTrackId) {
-        throw new Error(
-          'No spotify track id found in metadata (razrab gayniy)'
-        );
+    const track = this.tracks[0];
+    if (this.isRadio && track.metadata?.isRadio) {
+      const track = tracks[0];
+      if (!track.metadata?.spotifyTrackId) {
+        throw new Error('No spotify track id found (data inconsistency)');
       }
 
-      this.radioSession.tracks.push({
-        spotifyId: spotifyTrackId,
-        title: tracks[0].title,
-        youtubeUrl: tracks[0].url,
+      this.radioSession.playedTracks.push({
+        spotifyId: track.metadata.spotifyTrackId,
+        title: track.title,
       });
     }
 

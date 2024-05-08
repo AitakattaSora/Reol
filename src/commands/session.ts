@@ -1,5 +1,4 @@
 import { EmbedBuilder } from 'discord.js';
-import getYouTubeID from 'get-youtube-id';
 import { Command } from '../interfaces/Command';
 import { ENV } from '../utils/ENV';
 import { DEFAULT_COLOR } from '../utils/helpers';
@@ -34,27 +33,12 @@ export default {
       const duplicateSpotifyIds = radioSessionTracks
         .map((track) => track.spotifyId)
         .filter((spotifyId, index, self) => self.indexOf(spotifyId) !== index);
-      const duplicateYoutubeUrls = radioSessionTracks
-        .map((track) => track.youtubeUrl)
-        .filter(
-          (youtubeUrl, index, self) => self.indexOf(youtubeUrl) !== index
-        );
 
       if (duplicateSpotifyIds.length) {
         message.channel.send(
           `WARNING: Duplicate Spotify IDs found: ${[
             ...new Set(duplicateSpotifyIds),
           ].join(', ')}`
-        );
-      }
-
-      if (duplicateYoutubeUrls.length) {
-        message.channel.send(
-          `WARNING: Duplicate YouTube URLs found: ${[
-            ...new Set(duplicateYoutubeUrls),
-          ]
-            .map((l) => `<${l}>`)
-            .join(', ')}`
         );
       }
 
@@ -69,14 +53,10 @@ export default {
         .slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
         .forEach((track, idx) => {
           const spotifyUrl = `https://open.spotify.com/track/${track.spotifyId}`;
-          const youtubeUrl = track.youtubeUrl;
-          const youtubeID = getYouTubeID(youtubeUrl);
 
           queueEmbed.addFields({
             name: `${idx + PAGE_SIZE * (page - 1) + 1}. ${track.title}`,
-            value: `[${track.spotifyId}](${spotifyUrl}) / [${
-              youtubeID || youtubeUrl
-            }](${youtubeUrl})`,
+            value: spotifyUrl,
           });
         });
 
