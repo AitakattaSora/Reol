@@ -1,13 +1,17 @@
-import { TextChannel, VoiceBasedChannel } from 'discord.js';
+import { EmbedBuilder, TextChannel, VoiceBasedChannel } from 'discord.js';
 import { Queue } from '../interfaces/Queue';
 import { joinVoiceChannel } from '@discordjs/voice';
 import { ENV } from '../utils/ENV';
 import { Command } from '../interfaces/Command';
 import { getTrack } from '../utils/getTrack';
-import { isSpotifyURL } from '../utils/helpers';
+import { DEFAULT_COLOR, isSpotifyURL } from '../utils/helpers';
 import { getSpotifyTrackId } from '../utils/spotify/getSpotifyTrackId';
 import { getTrackDetails } from '../external/spotify/getTrackDetails';
 import { getSpotifyTrackTitle } from '../external/spotify/utils/getSpotifyTrackTitle';
+import { getSimilarTracks } from '../external/spotify/getSimilarTracks';
+import { truncateLongDescription } from '../utils/truncateDescription';
+import { Track } from '../interfaces/Track';
+import { getYoutubeTrackByQuery } from '../utils/youtube/getYoutubeTrack';
 
 export default {
   name: 'radio',
@@ -36,6 +40,11 @@ export default {
       const guildId = message.guildId;
       if (!guildId) throw new GuildNotFoundError();
 
+      const queue = client.queues.get(guildId);
+      if (queue && queue.isRadio) {
+        return message.reply('Radio is already playing');
+      }
+
       const query = args.join(' ');
 
       const spotifyTrackId = await getSpotifyTrackId(query);
@@ -53,40 +62,69 @@ export default {
         throw new Error(`Unable to get spotify track for ${spotifyTrackId}`);
       }
 
+      const similarTracks = await getSimilarTracks(spotifyTrackId);
+
+      const tracks = similarTracks.map((t) => ({
+        spotifyId: t.id,
+        title: t.title,
+      }));
+      if (tracks.length < 10) {
+        throw new Error('Not enough similar tracks found, cant start radio.');
+      }
+
       track.metadata = {
         artist: spotifyTrack.artists[0].name,
         title: spotifyTrack.name,
         spotifyTrackId,
       };
 
-      const queue = client.queues.get(guildId);
-      if (queue) {
-        queue.isRadio = true;
-        queue.enqueue(track);
+      message.channel.send(
+        `Processing ${tracks.length} tracks, please wait...`
+      );
 
-        if (queue.tracks.length > 1) {
-          message.channel.send(`Added to radio mix: **${track.title}**`);
+      const youtubeTracks: Track[] = [];
+      for (let i = 0; i < tracks.length; i++) {
+        try {
+          const youtubeTrack = await getYoutubeTrackByQuery(tracks[i].title);
+          if (youtubeTrack) {
+            youtubeTracks.push(youtubeTrack);
+          }
+        } catch (error) {
+          console.log(error);
         }
-
-        return;
       }
 
-      message.channel.send(`Starting radio based on **${spotifyTrackTitle}**`);
+      if (queue) {
+        queue.enqueue(...youtubeTracks);
+      } else {
+        const newQueue = new Queue({
+          message,
+          textChannel: message.channel as TextChannel,
+          connection: joinVoiceChannel({
+            channelId: voiceChannel.id,
+            guildId,
+            adapterCreator: voiceChannel.guild.voiceAdapterCreator,
+            selfDeaf: false,
+          }),
+        });
 
-      const newQueue = new Queue({
-        message,
-        textChannel: message.channel as TextChannel,
-        isRadio: true,
-        connection: joinVoiceChannel({
-          channelId: voiceChannel.id,
-          guildId,
-          adapterCreator: voiceChannel.guild.voiceAdapterCreator,
-          selfDeaf: false,
-        }),
+        client.queues.set(guildId, newQueue);
+        newQueue.enqueue(...youtubeTracks);
+      }
+
+      const description = tracks
+        .map((song, idx) => `${idx + 1}. ${song.title}`)
+        .join('\n');
+      const embedDescription = truncateLongDescription(description);
+
+      const playlistEmbed = new EmbedBuilder()
+        .setTitle(`Radio based on ${spotifyTrackTitle}`)
+        .setDescription(embedDescription)
+        .setColor(DEFAULT_COLOR);
+
+      return message.channel.send({
+        embeds: [playlistEmbed],
       });
-
-      client.queues.set(guildId, newQueue);
-      newQueue.enqueue(track);
     } catch (error: any) {
       console.error(error);
 

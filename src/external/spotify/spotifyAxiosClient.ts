@@ -9,14 +9,6 @@ const spotifyClient = axios.create({
   },
 });
 
-spotifyClient.interceptors.request.use((config) => {
-  if (config.url === '/recommendations') {
-    console.log('Getting similar track with these params:', config.params);
-  }
-
-  return config;
-});
-
 spotifyClient.interceptors.request.use(async (config) => {
   if (
     !authToken.accessToken ||

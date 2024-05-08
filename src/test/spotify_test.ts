@@ -1,68 +1,43 @@
+import { AppDataSource } from '../db';
 import { getSimilarTracks } from '../external/spotify/getSimilarTracks';
-import { getTrackDetails } from '../external/spotify/getTrackDetails';
-import { findUnplayedTrack } from '../external/spotify/utils/findUnplayedTrack';
-import { getSpotifyTrackTitle } from '../external/spotify/utils/getSpotifyTrackTitle';
-import { RadioSession } from '../interfaces/Queue';
+import { Track } from '../interfaces/Track';
 import { SPOTIFY_TRACK_REGEX } from '../utils/helpers';
 import { getYoutubeTrackByQuery } from '../utils/youtube/getYoutubeTrack';
 
-async function delay(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
 async function main() {
   try {
+    await AppDataSource.initialize();
+
     const url = process.argv[2];
     if (!url) throw new Error('Please provide a Spotify track URL');
 
     const id = url.match(SPOTIFY_TRACK_REGEX)?.[1];
     if (!id) throw new Error('Invalid Spotify track URL');
 
-    let currentId = id;
+    const tracks = await getSimilarTracks(id);
+    tracks.length = 20;
 
-    const trackDetails: any = await getTrackDetails(id);
-    if (!trackDetails) throw new Error(`No track details found for ${id}`);
-
-    const youtubeTrack = await getYoutubeTrackByQuery(
-      `${trackDetails.artists[0].name} - ${trackDetails.name}`
-    );
-
-    const radioSession: RadioSession = {
-      tracks: [],
-      skippedTracks: [],
-    };
-
-    radioSession.tracks.push({
-      spotifyId: currentId,
-      youtubeUrl: youtubeTrack.url,
-      title: getSpotifyTrackTitle(trackDetails),
-    });
-
-    while (radioSession.tracks.length < 2) {
-      const spotifyTracks = await getSimilarTracks(currentId, radioSession);
-      const unplayedTrack = await findUnplayedTrack(
-        spotifyTracks,
-        radioSession
-      );
-
-      await delay(2000);
-
-      if (!unplayedTrack) throw new Error('No unplayed track found');
-
-      radioSession.tracks.push({
-        spotifyId: unplayedTrack.metadata?.spotifyTrackId || '',
-        youtubeUrl: unplayedTrack.url,
-        title: unplayedTrack.metadata?.title || '',
-      });
-      const spotifyTrackId = unplayedTrack.metadata?.spotifyTrackId;
-      if (!spotifyTrackId) throw new Error('No Spotify track ID found');
-
-      currentId = spotifyTrackId;
+    const youtubeTracks: Track[] = [];
+    for (const track of tracks) {
+      try {
+        const youtubeTrack = await getYoutubeTrackByQuery(
+          track.title + ' lyrics'
+        );
+        if (youtubeTrack) {
+          youtubeTracks.push({
+            ...youtubeTrack,
+            metadata: {
+              ...youtubeTrack.metadata,
+              spotifyTrackId: track.id,
+            },
+          });
+        }
+      } catch (error) {}
     }
 
-    for (const track of radioSession.tracks) {
+    for (const track of youtubeTracks) {
       console.log(
-        `https://open.spotify.com/track/${track.spotifyId}: ${track.title} - ${track.youtubeUrl}`
+        `- https://open.spotify.com/track/${track.metadata?.spotifyTrackId}: ${track.title} - ${track?.url}`
       );
     }
   } catch (error) {
