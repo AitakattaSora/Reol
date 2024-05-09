@@ -38,7 +38,7 @@ export async function getSimilarTracks(id: string): Promise<SpotifyTrack[]> {
       target_valence: trackFeatures.valence,
       target_tempo: trackFeatures.tempo,
       min_popularity: trackDetails.popularity - 10,
-      limit: 70,
+      limit: 50,
     };
 
     const data = await spotifyFetch('/recommendations', {
@@ -59,7 +59,7 @@ export async function getSimilarTracks(id: string): Promise<SpotifyTrack[]> {
       ...tracks,
     ]);
 
-    return uniqueTracks;
+    return uniqueTracks.slice(0, 20);
   } catch (error) {
     throw error;
   }
