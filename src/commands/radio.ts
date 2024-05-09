@@ -40,11 +40,6 @@ export default {
       const guildId = message.guildId;
       if (!guildId) throw new GuildNotFoundError();
 
-      const queue = client.queues.get(guildId);
-      if (queue && queue.isRadio) {
-        return message.reply('Radio is already playing');
-      }
-
       const query = args.join(' ');
 
       const spotifyTrackId = await getSpotifyTrackId(query);
@@ -82,18 +77,15 @@ export default {
         `Processing ${tracks.length} tracks, please wait...`
       );
 
-      const youtubeTracks: Track[] = [];
-      for (let i = 0; i < tracks.length; i++) {
-        try {
-          const youtubeTrack = await getYoutubeTrackByQuery(tracks[i].title);
-          if (youtubeTrack) {
-            youtubeTracks.push(youtubeTrack);
-          }
-        } catch (error) {
-          console.log(error);
-        }
-      }
+      const youtubePromises = tracks.map((track) =>
+        getYoutubeTrackByQuery(track.title).catch(() => null)
+      );
 
+      const youtubeTracks = (await Promise.all(youtubePromises)).filter(
+        (video) => video !== null
+      ) as Track[];
+
+      const queue = client.queues.get(guildId);
       if (queue) {
         queue.enqueue(...youtubeTracks);
       } else {
@@ -111,6 +103,8 @@ export default {
         client.queues.set(guildId, newQueue);
         newQueue.enqueue(...youtubeTracks);
       }
+
+      message.channel.send(`Added ${youtubeTracks.length} tracks to the queue`);
 
       const description = tracks
         .map((song, idx) => `${idx + 1}. ${song.title}`)
