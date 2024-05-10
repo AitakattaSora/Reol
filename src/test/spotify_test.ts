@@ -1,6 +1,5 @@
 import { AppDataSource } from '../db';
 import { getSimilarTracks } from '../external/spotify/getSimilarTracks';
-import { Track } from '../interfaces/Track';
 import { SPOTIFY_TRACK_REGEX } from '../utils/helpers';
 import { getYoutubeTrackByQuery } from '../utils/youtube/getYoutubeTrack';
 
@@ -15,30 +14,20 @@ async function main() {
     if (!id) throw new Error('Invalid Spotify track URL');
 
     const tracks = await getSimilarTracks(id);
-    tracks.length = 20;
+    const youtubePromises = tracks.map(async (track) => {
+      const ytt = await getYoutubeTrackByQuery(track.title).catch(() => null);
+      return {
+        ...ytt,
+        popularity: track.popularity,
+      };
+    });
 
-    const youtubeTracks: Track[] = [];
-    for (const track of tracks) {
-      try {
-        const youtubeTrack = await getYoutubeTrackByQuery(
-          track.title + ' lyrics'
-        );
-        if (youtubeTrack) {
-          youtubeTracks.push({
-            ...youtubeTrack,
-            metadata: {
-              ...youtubeTrack.metadata,
-              spotifyTrackId: track.id,
-            },
-          });
-        }
-      } catch (error) {}
-    }
+    const youtubeTracks = (await Promise.all(youtubePromises)).filter(
+      (video) => video !== null
+    ) as any[];
 
     for (const track of youtubeTracks) {
-      console.log(
-        `- https://open.spotify.com/track/${track.metadata?.spotifyTrackId}: ${track.title} - ${track?.url}`
-      );
+      console.log(`- [${track.popularity}] ${track.title} - ${track.url}`);
     }
   } catch (error) {
     if (error instanceof Error) {

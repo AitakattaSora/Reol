@@ -116,6 +116,11 @@ export default {
         .setDescription(embedDescription)
         .setColor(DEFAULT_COLOR);
 
+      const albumImageHref = spotifyTrack.album?.images?.[0]?.url;
+      if (albumImageHref) {
+        playlistEmbed.setThumbnail(albumImageHref);
+      }
+
       return message.channel.send({
         embeds: [playlistEmbed],
       });
