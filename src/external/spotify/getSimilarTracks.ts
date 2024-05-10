@@ -4,6 +4,7 @@ import { getTrackFeatures } from './getTrackFeatures';
 import { spotifyFetch } from './spotifyAxiosClient';
 import { getArtistRelatedArtists } from './getArtistRelatedArtists';
 import { removeTrackDuplicates } from '../../utils/removeArrayDuplicates';
+import { getBannedArtists } from '../../db/methods/getBannedArtists';
 
 export interface SpotifyTrack extends TrackDetails {
   title: string;
@@ -25,8 +26,10 @@ export async function getSimilarTracks(id: string): Promise<SpotifyTrack[]> {
       trackDetails.artists[0].id
     );
 
+    const bannedArtists = await getBannedArtists();
     const artistsSeed = relatedArtists
       .map((a) => a.id)
+      .filter((id) => !bannedArtists.find((b) => b.spotifyId === id))
       .slice(0, 4)
       .join(',');
 
@@ -38,18 +41,23 @@ export async function getSimilarTracks(id: string): Promise<SpotifyTrack[]> {
       target_valence: trackFeatures.valence,
       target_tempo: trackFeatures.tempo,
       min_popularity: trackDetails.popularity - 10,
-      limit: 50,
+      limit: 100,
     };
 
     const data = await spotifyFetch('/recommendations', {
       params: requestParams,
     });
 
-    const tracks = (data?.tracks || []).map((t: any) => ({
-      id: t.id,
-      title: getSpotifyTrackTitle(t),
-      artistId: t.artists[0].id,
-    }));
+    const tracks = (data?.tracks || [])
+      .filter(
+        (t: any) =>
+          !bannedArtists.find((b) => b.spotifyId === t?.artists?.[0]?.id)
+      )
+      .map((t: any) => ({
+        id: t.id,
+        title: getSpotifyTrackTitle(t),
+      }))
+      .sort((a: SpotifyTrack, b: SpotifyTrack) => b.popularity - a.popularity);
 
     const uniqueTracks: SpotifyTrack[] = removeTrackDuplicates([
       {
