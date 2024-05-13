@@ -8,11 +8,6 @@ export interface TrackDetails {
     id: string;
     name: string;
   }[];
-  album: {
-    images: {
-      url: string;
-    }[];
-  };
 }
 
 export async function getTrackDetails(
