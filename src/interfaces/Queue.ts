@@ -17,8 +17,8 @@ import client from '..';
 import { ENV } from '../utils/ENV';
 import { Track } from './Track';
 import { createResource } from '../utils/track/createResource';
-import { getRadioSessionUnplayedTracks } from '../utils/radio/getRadioSessionUnplayedTracks';
 import { getTrack } from '../utils/getTrack';
+import { RadioSession } from './RadioSession';
 
 const wait = promisify(setTimeout);
 
@@ -26,17 +26,7 @@ export interface QueueOptions {
   message: Message;
   textChannel: TextChannel;
   connection: VoiceConnection;
-  isRadio?: boolean;
-}
-
-export interface RadioSessionTrack {
-  spotifyId: string;
-  title: string;
-}
-
-export interface RadioSession {
-  tracks: RadioSessionTrack[]; // recommendataions
-  playedTracks: RadioSessionTrack[];
+  radioSession?: RadioSession;
 }
 
 export class Queue {
@@ -53,21 +43,17 @@ export class Queue {
   public muted = false;
   public waitTimeout: NodeJS.Timeout | null;
   public isRadio = false;
+  public radioSession: RadioSession | null;
 
   private queueLock = false;
   private readyLock = false;
   private stopped = false;
-  public radioSession: RadioSession;
 
   constructor(options: QueueOptions) {
     this.message = options.message;
     this.connection = options.connection;
     this.textChannel = options.textChannel;
-    this.isRadio = options.isRadio || false;
-    this.radioSession = {
-      tracks: [],
-      playedTracks: [],
-    };
+    this.radioSession = options?.radioSession || null;
 
     this.player = createAudioPlayer({
       behaviors: { noSubscriber: NoSubscriberBehavior.Play },
@@ -187,35 +173,29 @@ export class Queue {
   }
 
   public async processRadio() {
+    if (this.radioSession === null) return;
+
     try {
-      const unplayedTracks = getRadioSessionUnplayedTracks(this.radioSession);
-      if (!unplayedTracks) throw new Error('Radio is over.');
+      const nextTrack = this.radioSession.getNextTrack();
+      if (!nextTrack) {
+        this.radioSession = null;
+        return this.textChannel.send('Radio is over');
+      }
 
-      const unplayedTrack = unplayedTracks[0];
-      const track = await getTrack(unplayedTrack.title + ' lyrics');
-
+      const track = await getTrack(nextTrack.title + ' lyrics');
       if (!track) throw new Error('No track found');
 
-      track.metadata = {
-        artist: '',
-        title: unplayedTrack.title,
-        isRadio: true,
-        spotifyTrackId: unplayedTrack.spotifyId,
-      };
-
-      this.radioSession.playedTracks.push(unplayedTracks[0]);
-      this.enqueue(track);
+      this.enqueue({
+        ...track,
+        metadata: {
+          artist: '',
+          title: nextTrack.title,
+          spotifyTrackId: nextTrack.spotifyId,
+        },
+      });
     } catch (error: any) {
       return this.textChannel.send(error?.message || 'An error occurred');
     }
-  }
-
-  public stopRadio() {
-    this.isRadio = false;
-    this.radioSession = {
-      tracks: [],
-      playedTracks: [],
-    };
   }
 
   public enqueue(...tracks: Track[]) {
@@ -223,19 +203,6 @@ export class Queue {
     this.waitTimeout = null;
     this.stopped = false;
     this.tracks = this.tracks.concat(tracks);
-
-    const track = this.tracks[0];
-    if (this.isRadio && track.metadata?.isRadio) {
-      const track = tracks[0];
-      if (!track.metadata?.spotifyTrackId) {
-        throw new Error('No spotify track id found (data inconsistency)');
-      }
-
-      this.radioSession.playedTracks.push({
-        spotifyId: track.metadata.spotifyTrackId,
-        title: track.title,
-      });
-    }
 
     this.processQueue();
   }
@@ -248,7 +215,7 @@ export class Queue {
     this.loop = false;
     this.tracks = [];
 
-    this.stopRadio();
+    this.radioSession = null;
     this.player.stop();
 
     this.textChannel.send('Queue ended');
