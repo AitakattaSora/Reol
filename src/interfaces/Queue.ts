@@ -42,7 +42,6 @@ export class Queue {
   public loop = false;
   public muted = false;
   public waitTimeout: NodeJS.Timeout | null;
-  public isRadio = false;
   public radioSession: RadioSession | null;
 
   private queueLock = false;
@@ -138,7 +137,7 @@ export class Queue {
             this.tracks.shift();
 
             if (this.tracks.length === 0) {
-              if (this.isRadio) {
+              if (this.radioSession !== null) {
                 this.processRadio();
                 return;
               }
@@ -183,6 +182,7 @@ export class Queue {
       }
 
       const track = await getTrack(nextTrack.title + ' lyrics');
+      track.requestedBy = 'Radio';
       if (!track) throw new Error('No track found');
 
       this.enqueue({
