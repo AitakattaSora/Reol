@@ -5,19 +5,15 @@ export interface RadioSessionTrack {
 
 export class RadioSession {
   private tracks: RadioSessionTrack[];
-  private playedTracks: RadioSessionTrack[];
+  public initialTrack: RadioSessionTrack;
 
   constructor(tracks: RadioSessionTrack[]) {
     this.tracks = tracks;
-    this.playedTracks = [];
+    this.initialTrack = tracks[0];
   }
 
   public getTracks() {
     return this.tracks;
-  }
-
-  public getPlayedTracks() {
-    return this.playedTracks;
   }
 
   public getNextTrack() {

@@ -15,7 +15,6 @@ async function main() {
   );
 
   console.log(radio.getTracks());
-  console.log(radio.getPlayedTracks());
   console.log(radio.getNextTrack());
   console.log(radio.getTracks());
 }

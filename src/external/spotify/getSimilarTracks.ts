@@ -41,7 +41,7 @@ export async function getSimilarTracks(id: string): Promise<SpotifyTrack[]> {
       target_valence: trackFeatures.valence,
       target_tempo: trackFeatures.tempo,
       min_popularity: trackDetails.popularity - 10,
-      limit: 100,
+      limit: 60,
     };
 
     const data = await spotifyFetch('/recommendations', {
@@ -49,10 +49,11 @@ export async function getSimilarTracks(id: string): Promise<SpotifyTrack[]> {
     });
 
     const tracks = (data?.tracks || [])
-      .filter(
-        (t: any) =>
-          !bannedArtists.find((b) => b.spotifyId === t?.artists?.[0]?.id)
-      )
+      .filter((t: any) => {
+        const artists = (t?.artists || []).map((a: any) => a.id);
+
+        return !bannedArtists.find((b) => artists.includes(b.spotifyId));
+      })
       .map((t: any) => ({
         id: t.id,
         title: getSpotifyTrackTitle(t),
@@ -67,7 +68,7 @@ export async function getSimilarTracks(id: string): Promise<SpotifyTrack[]> {
       ...tracks,
     ]);
 
-    return uniqueTracks.slice(0, 20);
+    return uniqueTracks.slice(0, 30);
   } catch (error) {
     throw error;
   }

@@ -4,24 +4,31 @@ import { ENV } from '../utils/ENV';
 import { DEFAULT_COLOR } from '../utils/helpers';
 
 export default {
-  name: 'session',
-  description: 'Show radio session history',
+  name: 'upcoming',
+  description: 'Show radio upcoming tracks',
   async execute(client, message, args) {
     try {
       const guildId = message.guildId;
       if (!guildId) throw new GuildNotFoundError();
 
       const queue = client.queues.get(guildId);
-      if (!queue || !queue.tracks.length) {
+      if (!queue) {
         return message.channel.send('There is no queue.');
       }
 
-      const radioSessionTracks = queue.radioSession.tracks || [];
-      if (!radioSessionTracks.length) {
-        return message.channel.send('There is no radio session history.');
+      const session = queue.radioSession;
+      if (!session) {
+        return message.channel.send('There is no radio radio session.');
       }
 
-      const PAGE_SIZE = 15;
+      const radioSessionTracks = session.getTracks() || [];
+      if (!radioSessionTracks.length) {
+        return message.channel.send(
+          'There are no upcoming tracks in the radio session'
+        );
+      }
+
+      const PAGE_SIZE = 10;
       const pages = Math.ceil(radioSessionTracks.length / PAGE_SIZE);
       const page = args?.[0] ? parseInt(args[0]) : 1;
 
@@ -45,7 +52,7 @@ export default {
       const queueEmbed = new EmbedBuilder();
       queueEmbed
         .setDescription(
-          `Radio session history (${radioSessionTracks.length} tracks)`
+          `Upcoming radio tracks (${radioSessionTracks.length} tracks)`
         )
         .setColor(DEFAULT_COLOR);
 
@@ -66,7 +73,7 @@ export default {
             name: `Page ${page} of ${pages}`,
           })
           .setFooter({
-            text: `${ENV.PREFIX}session <page> to view a specific page`,
+            text: `${ENV.PREFIX}upcoming <page> to view a specific page`,
           });
       }
 
