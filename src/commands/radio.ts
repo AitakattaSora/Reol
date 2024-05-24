@@ -8,6 +8,8 @@ import { isSpotifyURL } from '../utils/helpers';
 import { getSpotifyTrackId } from '../utils/spotify/getSpotifyTrackId';
 import { getTrackDetails } from '../external/spotify/getTrackDetails';
 import { getSpotifyTrackTitle } from '../external/spotify/utils/getSpotifyTrackTitle';
+import { getSimilarTracks } from '../external/spotify/getSimilarTracks';
+import { RadioSession } from '../interfaces/RadioSession';
 
 export default {
   name: 'radio',
@@ -17,10 +19,6 @@ export default {
     try {
       if (!args?.length) {
         return message.reply('Please a spotify song link');
-      }
-
-      if (!message.channel) {
-        return message.reply('Channel not found');
       }
 
       const voiceChannel =
@@ -53,40 +51,50 @@ export default {
         throw new Error(`Unable to get spotify track for ${spotifyTrackId}`);
       }
 
+      const similarTracks = await getSimilarTracks(spotifyTrackId);
+      const tracks = similarTracks.map((t) => ({
+        spotifyId: t.id,
+        title: t.title,
+      }));
+
+      if (tracks.length < 10) {
+        throw new Error('Not enough similar tracks found, cant start radio.');
+      }
+
+      track.requestedBy = message.author.displayName;
       track.metadata = {
         artist: spotifyTrack.artists[0].name,
         title: spotifyTrack.name,
         spotifyTrackId,
       };
 
+      // Remove the first track from the list, as it will be played first
+      tracks.shift();
+
       const queue = client.queues.get(guildId);
       if (queue) {
-        queue.isRadio = true;
         queue.enqueue(track);
+        queue.radioSession = new RadioSession(tracks);
+      } else {
+        const newQueue = new Queue({
+          message,
+          textChannel: message.channel as TextChannel,
+          radioSession: new RadioSession(tracks),
+          connection: joinVoiceChannel({
+            channelId: voiceChannel.id,
+            guildId,
+            adapterCreator: voiceChannel.guild.voiceAdapterCreator,
+            selfDeaf: false,
+          }),
+        });
 
-        if (queue.tracks.length > 1) {
-          message.channel.send(`Added to radio mix: **${track.title}**`);
-        }
-
-        return;
+        client.queues.set(guildId, newQueue);
+        newQueue.enqueue(track);
       }
 
-      message.channel.send(`Starting radio based on **${spotifyTrackTitle}**`);
-
-      const newQueue = new Queue({
-        message,
-        textChannel: message.channel as TextChannel,
-        isRadio: true,
-        connection: joinVoiceChannel({
-          channelId: voiceChannel.id,
-          guildId,
-          adapterCreator: voiceChannel.guild.voiceAdapterCreator,
-          selfDeaf: false,
-        }),
-      });
-
-      client.queues.set(guildId, newQueue);
-      newQueue.enqueue(track);
+      return message.channel.send(
+        `Starting radio based on: **${spotifyTrackTitle}**, use **!upcoming** to see upcoming tracks`
+      );
     } catch (error: any) {
       console.error(error);
 

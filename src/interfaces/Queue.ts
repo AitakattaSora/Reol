@@ -17,8 +17,8 @@ import client from '..';
 import { ENV } from '../utils/ENV';
 import { Track } from './Track';
 import { createResource } from '../utils/track/createResource';
-import { getSimilarTracks } from '../external/spotify/getSimilarTracks';
-import { findUnplayedTrack } from '../external/spotify/utils/findUnplayedTrack';
+import { getTrack } from '../utils/getTrack';
+import { RadioSession } from './RadioSession';
 
 const wait = promisify(setTimeout);
 
@@ -26,18 +26,7 @@ export interface QueueOptions {
   message: Message;
   textChannel: TextChannel;
   connection: VoiceConnection;
-  isRadio?: boolean;
-}
-
-interface RadioSessionTrack {
-  spotifyId: string;
-  title: string;
-  youtubeUrl: string;
-}
-
-export interface RadioSession {
-  tracks: RadioSessionTrack[];
-  skippedTracks: RadioSessionTrack[];
+  radioSession?: RadioSession;
 }
 
 export class Queue {
@@ -53,19 +42,17 @@ export class Queue {
   public loop = false;
   public muted = false;
   public waitTimeout: NodeJS.Timeout | null;
-  public isRadio = false;
+  public radioSession: RadioSession | null;
 
   private queueLock = false;
   private readyLock = false;
   private stopped = false;
-  public radioSession: RadioSession;
 
   constructor(options: QueueOptions) {
     this.message = options.message;
     this.connection = options.connection;
     this.textChannel = options.textChannel;
-    this.isRadio = options.isRadio || false;
-    this.radioSession = { tracks: [], skippedTracks: [] };
+    this.radioSession = options?.radioSession || null;
 
     this.player = createAudioPlayer({
       behaviors: { noSubscriber: NoSubscriberBehavior.Play },
@@ -150,49 +137,9 @@ export class Queue {
             this.tracks.shift();
 
             if (this.tracks.length === 0) {
-              if (this.isRadio) {
-                try {
-                  if (!this.radioSession.tracks.length) {
-                    throw new Error(
-                      'No previous track to get similar track for radio'
-                    );
-                  }
-
-                  const spotifyTrackId =
-                    this.radioSession.tracks[
-                      this.radioSession.tracks.length - 1
-                    ].spotifyId;
-
-                  const spotifyTracks = await getSimilarTracks(
-                    spotifyTrackId,
-                    this.radioSession
-                  );
-
-                  const unplayedTrack = await findUnplayedTrack(
-                    spotifyTracks,
-                    this.radioSession
-                  );
-
-                  console.log('Similar track result:', unplayedTrack);
-
-                  if (!unplayedTrack) {
-                    this.stopRadio();
-
-                    this.textChannel.send(
-                      'No similar track found for radio, stopping..'
-                    );
-
-                    return this.stop();
-                  }
-
-                  unplayedTrack.requestedBy = 'Radio';
-
-                  return this.enqueue(unplayedTrack);
-                } catch (error: any) {
-                  return this.textChannel.send(
-                    error?.message || 'An error occurred'
-                  );
-                }
+              if (this.radioSession !== null) {
+                this.processRadio();
+                return;
               }
 
               return this.stop();
@@ -224,9 +171,31 @@ export class Queue {
     });
   }
 
-  public stopRadio() {
-    this.isRadio = false;
-    this.radioSession = { tracks: [], skippedTracks: [] };
+  public async processRadio() {
+    if (this.radioSession === null) return;
+
+    try {
+      const nextTrack = this.radioSession.getNextTrack();
+      if (!nextTrack) {
+        this.radioSession = null;
+        return this.textChannel.send('Radio is over');
+      }
+
+      const track = await getTrack(nextTrack.title + ' lyrics');
+      track.requestedBy = 'Radio';
+      if (!track) throw new Error('No track found');
+
+      this.enqueue({
+        ...track,
+        metadata: {
+          artist: '',
+          title: nextTrack.title,
+          spotifyTrackId: nextTrack.spotifyId,
+        },
+      });
+    } catch (error: any) {
+      return this.textChannel.send(error?.message || 'An error occurred');
+    }
   }
 
   public enqueue(...tracks: Track[]) {
@@ -234,21 +203,6 @@ export class Queue {
     this.waitTimeout = null;
     this.stopped = false;
     this.tracks = this.tracks.concat(tracks);
-
-    if (this.isRadio) {
-      const spotifyTrackId = tracks[0].metadata?.spotifyTrackId;
-      if (!spotifyTrackId) {
-        throw new Error(
-          'No spotify track id found in metadata (razrab gayniy)'
-        );
-      }
-
-      this.radioSession.tracks.push({
-        spotifyId: spotifyTrackId,
-        title: tracks[0].title,
-        youtubeUrl: tracks[0].url,
-      });
-    }
 
     this.processQueue();
   }
@@ -261,7 +215,7 @@ export class Queue {
     this.loop = false;
     this.tracks = [];
 
-    this.stopRadio();
+    this.radioSession = null;
     this.player.stop();
 
     this.textChannel.send('Queue ended');

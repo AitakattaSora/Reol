@@ -1,28 +1,34 @@
 import { EmbedBuilder } from 'discord.js';
-import getYouTubeID from 'get-youtube-id';
 import { Command } from '../interfaces/Command';
 import { ENV } from '../utils/ENV';
 import { DEFAULT_COLOR } from '../utils/helpers';
 
 export default {
-  name: 'session',
-  description: 'Show radio session history',
+  name: 'upcoming',
+  description: 'Show radio upcoming tracks',
   async execute(client, message, args) {
     try {
       const guildId = message.guildId;
       if (!guildId) throw new GuildNotFoundError();
 
       const queue = client.queues.get(guildId);
-      if (!queue || !queue.tracks.length) {
+      if (!queue) {
         return message.channel.send('There is no queue.');
       }
 
-      const radioSessionTracks = queue.radioSession.tracks || [];
-      if (!radioSessionTracks.length) {
-        return message.channel.send('There is no radio session history.');
+      const session = queue.radioSession;
+      if (!session) {
+        return message.channel.send('There is no radio radio session.');
       }
 
-      const PAGE_SIZE = 15;
+      const radioSessionTracks = session.getTracks() || [];
+      if (!radioSessionTracks.length) {
+        return message.channel.send(
+          'There are no upcoming tracks in the radio session'
+        );
+      }
+
+      const PAGE_SIZE = 10;
       const pages = Math.ceil(radioSessionTracks.length / PAGE_SIZE);
       const page = args?.[0] ? parseInt(args[0]) : 1;
 
@@ -34,11 +40,6 @@ export default {
       const duplicateSpotifyIds = radioSessionTracks
         .map((track) => track.spotifyId)
         .filter((spotifyId, index, self) => self.indexOf(spotifyId) !== index);
-      const duplicateYoutubeUrls = radioSessionTracks
-        .map((track) => track.youtubeUrl)
-        .filter(
-          (youtubeUrl, index, self) => self.indexOf(youtubeUrl) !== index
-        );
 
       if (duplicateSpotifyIds.length) {
         message.channel.send(
@@ -48,20 +49,10 @@ export default {
         );
       }
 
-      if (duplicateYoutubeUrls.length) {
-        message.channel.send(
-          `WARNING: Duplicate YouTube URLs found: ${[
-            ...new Set(duplicateYoutubeUrls),
-          ]
-            .map((l) => `<${l}>`)
-            .join(', ')}`
-        );
-      }
-
       const queueEmbed = new EmbedBuilder();
       queueEmbed
         .setDescription(
-          `Radio session history (${radioSessionTracks.length} tracks)`
+          `Upcoming radio tracks (${radioSessionTracks.length} tracks)`
         )
         .setColor(DEFAULT_COLOR);
 
@@ -69,14 +60,10 @@ export default {
         .slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
         .forEach((track, idx) => {
           const spotifyUrl = `https://open.spotify.com/track/${track.spotifyId}`;
-          const youtubeUrl = track.youtubeUrl;
-          const youtubeID = getYouTubeID(youtubeUrl);
 
           queueEmbed.addFields({
             name: `${idx + PAGE_SIZE * (page - 1) + 1}. ${track.title}`,
-            value: `[${track.spotifyId}](${spotifyUrl}) / [${
-              youtubeID || youtubeUrl
-            }](${youtubeUrl})`,
+            value: spotifyUrl,
           });
         });
 
@@ -86,7 +73,7 @@ export default {
             name: `Page ${page} of ${pages}`,
           })
           .setFooter({
-            text: `${ENV.PREFIX}session <page> to view a specific page`,
+            text: `${ENV.PREFIX}upcoming <page> to view a specific page`,
           });
       }
 
