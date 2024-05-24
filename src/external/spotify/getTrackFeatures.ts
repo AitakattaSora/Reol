@@ -5,6 +5,8 @@ interface TrackFeatures {
   energy: number;
   valence: number;
   tempo: number;
+  acousticness: number;
+  instrumentalness: number;
 }
 
 export async function getTrackFeatures(

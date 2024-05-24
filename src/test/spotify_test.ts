@@ -1,69 +1,33 @@
+import { AppDataSource } from '../db';
 import { getSimilarTracks } from '../external/spotify/getSimilarTracks';
-import { getTrackDetails } from '../external/spotify/getTrackDetails';
-import { findUnplayedTrack } from '../external/spotify/utils/findUnplayedTrack';
-import { getSpotifyTrackTitle } from '../external/spotify/utils/getSpotifyTrackTitle';
-import { RadioSession } from '../interfaces/Queue';
 import { SPOTIFY_TRACK_REGEX } from '../utils/helpers';
 import { getYoutubeTrackByQuery } from '../utils/youtube/getYoutubeTrack';
 
-async function delay(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
 async function main() {
   try {
+    await AppDataSource.initialize();
+
     const url = process.argv[2];
     if (!url) throw new Error('Please provide a Spotify track URL');
 
     const id = url.match(SPOTIFY_TRACK_REGEX)?.[1];
     if (!id) throw new Error('Invalid Spotify track URL');
 
-    let currentId = id;
-
-    const trackDetails: any = await getTrackDetails(id);
-    if (!trackDetails) throw new Error(`No track details found for ${id}`);
-
-    const youtubeTrack = await getYoutubeTrackByQuery(
-      `${trackDetails.artists[0].name} - ${trackDetails.name}`
-    );
-
-    const radioSession: RadioSession = {
-      tracks: [],
-      skippedTracks: [],
-    };
-
-    radioSession.tracks.push({
-      spotifyId: currentId,
-      youtubeUrl: youtubeTrack.url,
-      title: getSpotifyTrackTitle(trackDetails),
+    const tracks = await getSimilarTracks(id);
+    const youtubePromises = tracks.map(async (track) => {
+      const ytt = await getYoutubeTrackByQuery(track.title).catch(() => null);
+      return {
+        ...ytt,
+        popularity: track.popularity,
+      };
     });
 
-    while (radioSession.tracks.length < 2) {
-      const spotifyTracks = await getSimilarTracks(currentId, radioSession);
-      const unplayedTrack = await findUnplayedTrack(
-        spotifyTracks,
-        radioSession
-      );
+    const youtubeTracks = (await Promise.all(youtubePromises)).filter(
+      (video) => video !== null
+    ) as any[];
 
-      await delay(2000);
-
-      if (!unplayedTrack) throw new Error('No unplayed track found');
-
-      radioSession.tracks.push({
-        spotifyId: unplayedTrack.metadata?.spotifyTrackId || '',
-        youtubeUrl: unplayedTrack.url,
-        title: unplayedTrack.metadata?.title || '',
-      });
-      const spotifyTrackId = unplayedTrack.metadata?.spotifyTrackId;
-      if (!spotifyTrackId) throw new Error('No Spotify track ID found');
-
-      currentId = spotifyTrackId;
-    }
-
-    for (const track of radioSession.tracks) {
-      console.log(
-        `https://open.spotify.com/track/${track.spotifyId}: ${track.title} - ${track.youtubeUrl}`
-      );
+    for (const track of youtubeTracks) {
+      console.log(`- [${track.popularity}] ${track.title} - ${track.url}`);
     }
   } catch (error) {
     if (error instanceof Error) {
