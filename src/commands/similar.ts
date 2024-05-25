@@ -1,5 +1,4 @@
-import { EmbedBuilder, VoiceBasedChannel } from 'discord.js';
-import { ENV } from '../utils/ENV';
+import { EmbedBuilder } from 'discord.js';
 import { Command } from '../interfaces/Command';
 import { DEFAULT_COLOR } from '../utils/helpers';
 import { getSpotifyTrackId } from '../utils/spotify/getSpotifyTrackId';
@@ -10,26 +9,20 @@ export default {
   description: 'Show similar spotify tracks',
   async execute(client, message, args) {
     try {
-      if (!args?.length) {
-        return message.reply('Please a spotify song link');
-      }
-
-      const voiceChannel =
-        message.member?.voice.channel ||
-        (client.channels.cache.get(ENV.VOICE_CHANNEL_ID) as VoiceBasedChannel);
-
-      if (!voiceChannel) {
-        return message.reply(
-          'Please join a voice channel or set a voice channel in the .env file.'
-        );
-      }
-
       const guildId = message.guildId;
       if (!guildId) throw new GuildNotFoundError();
 
-      const query = args.join(' ');
+      const queue = client.queues.get(guildId);
+      if (!queue || !queue.tracks.length) {
+        return message.channel.send('There is no queue.');
+      }
 
-      const spotifyTrackId = await getSpotifyTrackId(query);
+      const currentTrack = queue.tracks[0];
+      const query = (args || []).join(' ') || currentTrack.title;
+
+      const spotifyTrackId =
+        currentTrack.metadata?.spotifyTrackId ||
+        (await getSpotifyTrackId(query));
       if (!spotifyTrackId) {
         return message.reply(`Unable find spotify track from: ${query}`);
       }
@@ -41,7 +34,6 @@ export default {
 
       const tracksEmbed = new EmbedBuilder()
         .setTitle(`Similar track to ${similarTracks[0].title}`)
-        // .setDescription(embedDescription)
         .setColor(DEFAULT_COLOR);
 
       similarTracks.slice(1, 21).forEach((track, idx) => {
