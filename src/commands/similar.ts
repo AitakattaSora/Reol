@@ -13,15 +13,14 @@ export default {
       if (!guildId) throw new GuildNotFoundError();
 
       const queue = client.queues.get(guildId);
-      if (!queue || !queue.tracks.length) {
-        return message.channel.send('There is no queue.');
+      const currentTrack = queue?.tracks[0];
+      const query = (args || []).join(' ') || currentTrack?.title;
+      if (!query) {
+        return message.reply('Please provide a query');
       }
 
-      const currentTrack = queue.tracks[0];
-      const query = (args || []).join(' ') || currentTrack.title;
-
       const spotifyTrackId =
-        currentTrack.metadata?.spotifyTrackId ||
+        currentTrack?.metadata?.spotifyTrackId ||
         (await getSpotifyTrackId(query));
       if (!spotifyTrackId) {
         return message.reply(`Unable find spotify track from: ${query}`);
