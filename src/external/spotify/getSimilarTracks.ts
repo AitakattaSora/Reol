@@ -36,10 +36,10 @@ export async function getSimilarTracks(id: string): Promise<SpotifyTrack[]> {
     const requestParams: Record<string, string | number> = {
       seed_tracks: id,
       seed_artists: artistsSeed,
-      target_danceability: trackFeatures.danceability,
-      target_energy: trackFeatures.energy,
-      target_valence: trackFeatures.valence,
-      target_tempo: trackFeatures.tempo,
+      // target_danceability: trackFeatures.danceability,
+      // target_energy: trackFeatures.energy,
+      // target_valence: trackFeatures.valence,
+      // target_tempo: trackFeatures.tempo,
       min_popularity: trackDetails.popularity - 10,
       limit: 60,
     };
@@ -57,6 +57,7 @@ export async function getSimilarTracks(id: string): Promise<SpotifyTrack[]> {
       .map((t: any) => ({
         id: t.id,
         title: getSpotifyTrackTitle(t),
+        popularity: t.popularity,
       }))
       .sort((a: SpotifyTrack, b: SpotifyTrack) => b.popularity - a.popularity);
 
