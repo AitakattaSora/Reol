@@ -1,12 +1,14 @@
 module.exports = {
   apps: [
     {
-      name: 'discord-bot',
-      script: 'dist/index.js',
-      watch: true,
-      autorestart: true,
-      max_restarts: 10,
-      restart_delay: 5000,
+      name: 'reol',
+      script: './dist/index.js',
+      watch: false,
+      error_file: 'logs/err.log',
+      out_file: 'logs/out.log',
+      log_file: 'logs/combined.log',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+      time: true,
     },
   ],
 };
