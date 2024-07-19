@@ -1,17 +1,22 @@
 import { createAudioResource, demuxProbe } from '@discordjs/voice';
+import appRootPath from 'app-root-path';
 import { spawn } from 'child_process';
-import ffmpegStatic from 'ffmpeg-static';
 import { Readable } from 'typeorm/platform/PlatformTools';
+import fs from 'fs';
 
 export async function createResource(url: string) {
   try {
+    const cookiesPath = `${appRootPath}/cookies.txt`;
+    const cookieFileExists = fs.existsSync(`${appRootPath}/cookies.txt`);
+
     const process = spawn(
       'yt-dlp',
       [
         '--ffmpeg-location',
-        ffmpegStatic as string,
-        '-f',
-        'bestaudio[acodec=opus]/bestaudio',
+        '/usr/bin/ffmpeg',
+        cookieFileExists ? `--cookies ${cookiesPath}` : '',
+        '--format',
+        'bestaudio/best',
         '--limit-rate',
         '800K',
         '-o',

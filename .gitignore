@@ -2,7 +2,9 @@ node_modules
 dist
 .data
 
-.env
+cookies.txt
+
+.env*
 *.sqlite
 .pnpm-debug.log
 logs/

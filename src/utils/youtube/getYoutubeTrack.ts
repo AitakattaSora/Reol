@@ -2,6 +2,8 @@ import retry from 'async-retry';
 import getYouTubeID from 'get-youtube-id';
 import { Track } from '../../interfaces/Track';
 import ytsr from 'youtube-sr';
+import yts from 'yt-search';
+import { formatDuration } from '../formatDuration';
 
 export async function getYoutubeTrackByQuery(query: string): Promise<Track> {
   return retry(
@@ -28,19 +30,23 @@ export async function getYoutubeTrackByQuery(query: string): Promise<Track> {
 
 export async function getYoutubeTrackByURL(url: string): Promise<Track> {
   try {
-    // for youtube shorts. youtube-sr doesn't support shorts, but shorts are basically videos
     const id = getYouTubeID(url);
-    const youtubeWatchUrl = `https://www.youtube.com/watch?v=${id}`;
-    const videoUrl = id ? youtubeWatchUrl : url;
+    if (!id) throw new Error('Invalid YouTube URL');
 
-    const video = await ytsr.getVideo(videoUrl);
+    let video = null;
+    try {
+      const res = await yts({ videoId: id });
+      video = res;
+    } catch (error) {
+      console.log('yts error:', error);
+    }
     if (!video) throw new Error('No video found');
 
     return {
       url: video.url,
       title: video.title || 'No title',
-      durationFormatted: video.durationFormatted,
-      durationSec: video.duration / 1000,
+      durationFormatted: formatDuration(video.seconds),
+      durationSec: video.seconds,
     };
   } catch (error: any) {
     throw error;

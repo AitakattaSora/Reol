@@ -35,7 +35,8 @@
     "sqlite3": "^5.1.6",
     "tweetnacl": "^1.0.3",
     "typeorm": "^0.3.15",
-    "youtube-sr": "^4.3.4"
+    "youtube-sr": "^4.3.4",
+    "yt-search": "^2.11.1"
   },
   "devDependencies": {
     "@types/async-retry": "^1.4.5",
@@ -43,6 +44,7 @@
     "@types/node": "^18.15.9",
     "@types/node-schedule": "^2.1.1",
     "@types/numeral": "^2.0.3",
+    "@types/yt-search": "^2.10.3",
     "concurrently": "^7.6.0",
     "nodemon": "^2.0.21",
     "ts-node": "^10.9.1",
