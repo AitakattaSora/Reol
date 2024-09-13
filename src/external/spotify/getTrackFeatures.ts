@@ -7,6 +7,7 @@ interface TrackFeatures {
   tempo: number;
   acousticness: number;
   instrumentalness: number;
+  loudness: number;
 }
 
 export async function getTrackFeatures(

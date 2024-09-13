@@ -2,7 +2,6 @@ import { TrackDetails, getTrackDetails } from './getTrackDetails';
 import { getSpotifyTrackTitle } from './utils/getSpotifyTrackTitle';
 import { getTrackFeatures } from './getTrackFeatures';
 import { spotifyFetch } from './spotifyAxiosClient';
-import { getArtistRelatedArtists } from './getArtistRelatedArtists';
 import { removeTrackDuplicates } from '../../utils/removeArrayDuplicates';
 import { getBannedArtists } from '../../db/methods/getBannedArtists';
 
@@ -22,24 +21,13 @@ export async function getSimilarTracks(id: string): Promise<SpotifyTrack[]> {
       throw new Error(`Unable to get track details for ${id}`);
     }
 
-    const relatedArtists = await getArtistRelatedArtists(
-      trackDetails.artists[0].id
-    );
-
-    const bannedArtists = await getBannedArtists();
-    const artistsSeed = relatedArtists
-      .map((a) => a.id)
-      .filter((id) => !bannedArtists.find((b) => b.spotifyId === id))
-      .slice(0, 4)
-      .join(',');
-
     const requestParams: Record<string, string | number> = {
       seed_tracks: id,
-      seed_artists: artistsSeed,
-      // target_danceability: trackFeatures.danceability,
-      // target_energy: trackFeatures.energy,
-      // target_valence: trackFeatures.valence,
-      // target_tempo: trackFeatures.tempo,
+      target_danceability: trackFeatures.danceability,
+      target_energy: trackFeatures.energy,
+      target_valence: trackFeatures.valence,
+      target_tempo: trackFeatures.tempo,
+      target_loudness: trackFeatures.loudness,
       min_popularity: trackDetails.popularity - 10,
       limit: 60,
     };
@@ -48,6 +36,7 @@ export async function getSimilarTracks(id: string): Promise<SpotifyTrack[]> {
       params: requestParams,
     });
 
+    const bannedArtists = await getBannedArtists();
     const tracks = (data?.tracks || [])
       .filter((t: any) => {
         const artists = (t?.artists || []).map((a: any) => a.id);
@@ -58,13 +47,14 @@ export async function getSimilarTracks(id: string): Promise<SpotifyTrack[]> {
         id: t.id,
         title: getSpotifyTrackTitle(t),
         popularity: t.popularity,
-      }))
-      .sort((a: SpotifyTrack, b: SpotifyTrack) => b.popularity - a.popularity);
+      }));
+    // .sort((a: SpotifyTrack, b: SpotifyTrack) => b.popularity - a.popularity);
 
     const uniqueTracks: SpotifyTrack[] = removeTrackDuplicates([
       {
         id: id,
         title: getSpotifyTrackTitle(trackDetails),
+        popularity: trackDetails.popularity,
       },
       ...tracks,
     ]);
