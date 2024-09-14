@@ -2,6 +2,7 @@ import retry from 'async-retry';
 import getYouTubeID from 'get-youtube-id';
 import { Track } from '../../interfaces/Track';
 import ytsr from 'youtube-sr';
+import yts from 'yt-search';
 import { formatDuration } from '../formatDuration';
 
 export async function getYoutubeTrackByQuery(query: string): Promise<Track> {
@@ -32,16 +33,14 @@ export async function getYoutubeTrackByURL(url: string): Promise<Track> {
     const id = getYouTubeID(url);
     if (!id) throw new Error('Invalid YouTube URL');
 
-    const videoUrl = `https://www.youtube.com/watch?v=${id}`;
-
-    const video = await ytsr.getVideo(videoUrl);
+    const video = await yts({ videoId: id });
     if (!video) throw new Error('No video found');
 
     return {
       url: video.url,
       title: video.title || 'No title',
-      durationFormatted: formatDuration(video.duration),
-      durationSec: video.duration,
+      durationFormatted: formatDuration(video.duration.seconds),
+      durationSec: video.duration.seconds,
     };
   } catch (error: any) {
     throw error;
