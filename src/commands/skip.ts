@@ -13,10 +13,9 @@ export default {
         return message.channel.send('There is no queue.');
       }
 
-      const messageNeeded = queue.tracks.length > 1;
       queue.player.stop(true);
 
-      if (messageNeeded) {
+      if (queue.tracks.length > 1) {
         return message.channel.send('Track skipped');
       }
     } catch (error) {

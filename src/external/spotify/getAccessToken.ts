@@ -40,7 +40,7 @@ export async function getAccessToken() {
     authToken.expiresAt = Date.now() + expires_in * 1000 - 60000; // Refresh 1 minute before expiry
   } catch (error) {
     if (axios.isAxiosError(error)) {
-      console.error('Error in API request:', error.response?.data);
+      console.error('Error in Spotify API request:', error.response?.data);
     } else {
       console.error('Unexpected error:', error);
     }

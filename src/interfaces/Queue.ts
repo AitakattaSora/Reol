@@ -139,6 +139,11 @@ export class Queue {
             if (this.tracks.length === 0) {
               if (this.radioSession !== null) {
                 this.processRadio();
+
+                if (this.radioSession.getTracks().length === 0) {
+                  this.stop();
+                }
+
                 return;
               }
 
@@ -181,7 +186,7 @@ export class Queue {
         return this.textChannel.send('Radio is over');
       }
 
-      const track = await getTrack(nextTrack.title + ' lyrics');
+      const track = await getTrack(nextTrack.title);
       track.requestedBy = 'Radio';
       if (!track) throw new Error('No track found');
 

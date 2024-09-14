@@ -17,10 +17,6 @@ export default {
   aliases: ['r'],
   async execute(client, message, args) {
     try {
-      if (!args?.length) {
-        return message.reply('Please a spotify song link');
-      }
-
       const voiceChannel =
         message.member?.voice.channel ||
         (client.channels.cache.get(ENV.VOICE_CHANNEL_ID) as VoiceBasedChannel);
@@ -34,7 +30,31 @@ export default {
       const guildId = message.guildId;
       if (!guildId) throw new GuildNotFoundError();
 
-      const query = args.join(' ');
+      const queue = client.queues.get(guildId);
+      const currentTrack = queue?.tracks[0] || null;
+
+      if (queue?.radioSession) {
+        return message.reply('Radio is already running');
+      }
+
+      let radioFromQueue = false;
+
+      let query = null;
+      if (args && args.length > 0) {
+        query = args.join(' ');
+      } else {
+        if (currentTrack?.metadata?.spotifyTrackId) {
+          query = `https://open.spotify.com/track/${currentTrack.metadata.spotifyTrackId}`;
+        } else {
+          query = currentTrack?.title || currentTrack?.url;
+        }
+
+        radioFromQueue = true;
+      }
+
+      if (!query) {
+        return message.reply('Please provide a query to start the radio');
+      }
 
       const spotifyTrackId = await getSpotifyTrackId(query);
       if (!spotifyTrackId) {
@@ -44,7 +64,7 @@ export default {
       const spotifyTrack = await getTrackDetails(spotifyTrackId);
       const spotifyTrackTitle = getSpotifyTrackTitle(spotifyTrack);
       const track = await getTrack(
-        isSpotifyURL(query) ? `${spotifyTrackTitle} lyrics` : query
+        isSpotifyURL(query) ? spotifyTrackTitle : query
       );
 
       if (!spotifyTrack) {
@@ -71,10 +91,18 @@ export default {
       // Remove the first track from the list, as it will be played first
       tracks.shift();
 
-      const queue = client.queues.get(guildId);
       if (queue) {
-        queue.enqueue(track);
+        if (!radioFromQueue) {
+          queue.enqueue(track);
+        }
+
         queue.radioSession = new RadioSession(tracks);
+
+        if (queue.tracks.length > 0) {
+          return message.channel.send(
+            `Will play radio based on: **${spotifyTrackTitle}** after queue ends, use **!upcoming** to see upcoming tracks`
+          );
+        }
       } else {
         const newQueue = new Queue({
           message,
@@ -90,11 +118,11 @@ export default {
 
         client.queues.set(guildId, newQueue);
         newQueue.enqueue(track);
-      }
 
-      return message.channel.send(
-        `Starting radio based on: **${spotifyTrackTitle}**, use **!upcoming** to see upcoming tracks`
-      );
+        return message.channel.send(
+          `Starting radio based on: **${spotifyTrackTitle}**, use **!upcoming** to see upcoming tracks`
+        );
+      }
     } catch (error: any) {
       console.error(error);
 
