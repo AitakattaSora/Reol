@@ -15,12 +15,14 @@ export default {
     }
 
     const count = Number(args?.[0]) || 10;
+    const guildId = message.guildId;
 
     const songRequestRepository = AppDataSource.getRepository(SongRequest);
     const requests: Array<SongRequest & { count: number }> =
       await songRequestRepository
         .createQueryBuilder('song_request')
         .select(['id', 'title', 'url', 'COUNT(url) AS count'])
+        .where('guildId = :guildId', { guildId })
         .groupBy('url')
         .orderBy('COUNT(url)', 'DESC')
         .take(count)
@@ -45,9 +47,14 @@ export default {
       .setColor(DEFAULT_COLOR);
 
     const topRequesters: Array<{ count: number; requestedBy: string }> =
-      await songRequestRepository.query(
-        'SELECT COUNT(requestedBy) as "count", requestedBy from song_request GROUP BY requestedBy ORDER BY COUNT(requestedBy) DESC'
-      );
+      await songRequestRepository
+        .createQueryBuilder('sr')
+        .select('sr.requestedBy', 'requestedBy')
+        .addSelect('COUNT(sr.requestedBy)', 'count')
+        .where('sr.guildId = :guildId', { guildId })
+        .groupBy('sr.requestedBy')
+        .orderBy('COUNT(sr.requestedBy)', 'DESC')
+        .getRawMany();
 
     const requesters = await Promise.all(
       topRequesters

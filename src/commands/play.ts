@@ -45,7 +45,12 @@ export default {
       track.requestedBy = message.author.displayName;
 
       if (ENV.USE_DB) {
-        await saveSongRequest(track.url, track.title, message.author.id);
+        await saveSongRequest({
+          url: track.url,
+          title: track.title,
+          authorId: message.author.id,
+          guildId,
+        });
       }
 
       const queue = client.queues.get(guildId);

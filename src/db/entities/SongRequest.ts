@@ -19,6 +19,9 @@ export class SongRequest {
   @Column()
   requestedBy: string;
 
+  @Column()
+  guildId: string;
+
   @CreateDateColumn({ type: 'datetime', default: () => 'CURRENT_TIMESTAMP' })
   requestedAt: Date;
 }
