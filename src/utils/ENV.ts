@@ -17,4 +17,5 @@ export const ENV = {
   PRIZE_POOL_CHANNEL_ID: process.env.PRIZE_POOL_CHANNEL_ID as string,
   SPOTIFY_CLIENT_ID: process.env.SPOTIFY_CLIENT_ID as string,
   SPOTIFY_CLIENT_SECRET: process.env.SPOTIFY_CLIENT_SECRET as string,
+  ADMINS: process.env.ADMINS?.split(',') || [],
 };
