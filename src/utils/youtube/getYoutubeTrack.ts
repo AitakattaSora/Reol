@@ -1,9 +1,8 @@
 import retry from 'async-retry';
 import getYouTubeID from 'get-youtube-id';
-import { Track } from '../../interfaces/Track';
 import ytsr from 'youtube-sr';
-import yts from 'yt-search';
-import { formatDuration } from '../formatDuration';
+import { Track } from '../../interfaces/Track';
+import { getYtCookiesString } from '../getYtCookiesString';
 
 export async function getYoutubeTrackByQuery(query: string): Promise<Track> {
   return retry(
@@ -33,14 +32,19 @@ export async function getYoutubeTrackByURL(url: string): Promise<Track> {
     const id = getYouTubeID(url);
     if (!id) throw new Error('Invalid YouTube URL');
 
-    const video = await yts({ videoId: id });
+    const cookies = await getYtCookiesString();
+    const video = await ytsr.getVideo(url, {
+      headers: {
+        cookie: cookies || '',
+      },
+    });
     if (!video) throw new Error('No video found');
 
     return {
       url: video.url,
       title: video.title || 'No title',
-      durationFormatted: formatDuration(video.duration.seconds),
-      durationSec: video.duration.seconds,
+      durationFormatted: video.durationFormatted,
+      durationSec: video.duration,
     };
   } catch (error: any) {
     throw error;
