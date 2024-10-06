@@ -1,8 +1,9 @@
 import retry from 'async-retry';
-import { Worker } from 'worker_threads';
-import path from 'path';
-import ytsr from 'youtube-sr';
+import getYouTubeID from 'get-youtube-id';
 import { Track } from '../../interfaces/Track';
+import ytsr from 'youtube-sr';
+import yts from 'yt-search';
+import { formatDuration } from '../formatDuration';
 
 export async function getYoutubeTrackByQuery(query: string): Promise<Track> {
   return retry(
@@ -28,26 +29,20 @@ export async function getYoutubeTrackByQuery(query: string): Promise<Track> {
 }
 
 export async function getYoutubeTrackByURL(url: string): Promise<Track> {
-  return new Promise((resolve, reject) => {
-    // worker is needed because youtube-sr block the main thread which causes the bot audio to freeze
-    const worker = new Worker(path.resolve(__dirname, './yt-worker.js')); // Use .ts if using ts-node, otherwise .js
+  try {
+    const id = getYouTubeID(url);
+    if (!id) throw new Error('Invalid YouTube URL');
 
-    worker.postMessage(url);
+    const video = await yts({ videoId: id });
+    if (!video) throw new Error('No video found');
 
-    worker.on('message', (message) => {
-      if (message.error) {
-        reject(new Error(message.error));
-      } else {
-        resolve(message as Track);
-      }
-    });
-
-    worker.on('error', reject);
-
-    worker.on('exit', (code) => {
-      if (code !== 0) {
-        reject(new Error(`Worker stopped with exit code ${code}`));
-      }
-    });
-  });
+    return {
+      url: video.url,
+      title: video.title || 'No title',
+      durationFormatted: formatDuration(video.duration.seconds),
+      durationSec: video.duration.seconds,
+    };
+  } catch (error: any) {
+    throw error;
+  }
 }
