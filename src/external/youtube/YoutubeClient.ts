@@ -1,7 +1,8 @@
 import getYouTubeID from 'get-youtube-id';
-import { ClientType, Innertube } from 'youtubei.js';
+import { Innertube } from 'youtubei.js';
 import { Track } from '../../interfaces/Track';
 import { formatDuration } from '../../utils/formatDuration';
+import { getYtCookiesString } from '../../utils/getYtCookiesString';
 
 export class YoutubeClient {
   client: Innertube;
@@ -16,12 +17,12 @@ export class YoutubeClient {
       return YoutubeClient.instance;
     }
 
+    const cookie = await getYtCookiesString();
     const client = await Innertube.create({
-      client_type: ClientType.WEB,
       retrieve_player: false,
-      enable_safety_mode: false,
       enable_session_cache: true,
       generate_session_locally: true,
+      ...(cookie && { cookie }),
     });
 
     YoutubeClient.instance = new YoutubeClient(client);
