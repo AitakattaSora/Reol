@@ -15,6 +15,7 @@ export default {
   name: 'radio',
   description: 'Start radio based on a spotify song',
   aliases: ['r'],
+  disabled: true,
   async execute(client, message, args) {
     try {
       const voiceChannel =

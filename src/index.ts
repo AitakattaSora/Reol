@@ -10,6 +10,7 @@ import { Queue } from './interfaces/Queue';
 import { ENV } from './utils/ENV';
 import { SPOTIFY_REGEX, YOUTUBE_REGEX } from './utils/helpers';
 import { AppDataSource } from './db';
+import { Command } from './interfaces/Command';
 
 if (!ENV.TOKEN) {
   throw new Error('TOKEN is not defined');
@@ -85,9 +86,13 @@ client.on('messageCreate', async (message) => {
   const command = args?.shift()?.toLowerCase();
   if (!command) return;
 
-  const cmd =
+  const cmd: Command =
     client.commands.get(command) ||
     client.commands.find((cmd) => cmd.aliases && cmd.aliases.includes(command));
+
+  if (cmd.disabled) {
+    return message.reply('This command is currently disabled.');
+  }
 
   if (cmd) {
     cmd.execute(client, message, args);
