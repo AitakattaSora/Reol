@@ -1,5 +1,5 @@
-export interface RadioSessionTrack {
-  spotifyId: string;
+interface RadioSessionTrack {
+  artist: string;
   title: string;
 }
 
