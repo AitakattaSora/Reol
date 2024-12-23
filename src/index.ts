@@ -90,11 +90,11 @@ client.on('messageCreate', async (message) => {
     client.commands.get(command) ||
     client.commands.find((cmd) => cmd.aliases && cmd.aliases.includes(command));
 
-  if (cmd.disabled) {
-    return message.reply('This command is currently disabled.');
-  }
-
   if (cmd) {
+    if (cmd.disabled) {
+      return message.reply('This command is currently disabled.');
+    }
+
     cmd.execute(client, message, args);
   }
 });
