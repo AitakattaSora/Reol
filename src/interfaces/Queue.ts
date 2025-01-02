@@ -183,7 +183,7 @@ export class Queue {
       const nextTrack = this.radioSession.getNextTrack();
       if (!nextTrack) {
         this.radioSession = null;
-        return this.textChannel.send('Radio is over');
+        return this.sendTextMessage('Radio is over');
       }
 
       const track = await getTrack(nextTrack.title);
@@ -199,7 +199,7 @@ export class Queue {
         },
       });
     } catch (error: any) {
-      return this.textChannel.send(error?.message || 'An error occurred');
+      return this.sendTextMessage(error?.message || 'An error occurred');
     }
   }
 
@@ -215,7 +215,6 @@ export class Queue {
   public stop() {
     if (this.stopped) return;
 
-    // this.queueLock = false;
     this.stopped = true;
     this.loop = false;
     this.tracks = [];
@@ -223,7 +222,7 @@ export class Queue {
     this.radioSession = null;
     this.player.stop();
 
-    this.textChannel.send('Queue ended');
+    this.sendTextMessage('Queue ended');
 
     if (this.waitTimeout !== null) return;
 
@@ -235,7 +234,7 @@ export class Queue {
       }
       client.queues.delete(this.message.guild!.id);
 
-      this.textChannel.send('Left voice channel');
+      this.sendTextMessage('Left voice channel');
     }, ENV.STAY_TIME_IN_SECONDS * 1000);
   }
 
@@ -272,13 +271,22 @@ export class Queue {
   private async sendPlayingMessage() {
     try {
       const track = this.tracks[0];
-      return this.textChannel.send(
+      return this.sendTextMessage(
         `**Now playing**: ${track.url}` +
           (track.requestedBy ? `\nRequested by **${track.requestedBy}**` : '')
       );
     } catch (error: any) {
       console.error(error);
-      this.textChannel.send(error.message);
+      this.sendTextMessage(error.message);
+      return;
+    }
+  }
+
+  private async sendTextMessage(message: string) {
+    try {
+      return this.textChannel.send(message);
+    } catch (error: any) {
+      console.error('Error sending text message', error);
       return;
     }
   }
