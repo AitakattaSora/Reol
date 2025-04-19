@@ -30,10 +30,6 @@ export default {
         );
       }
 
-      if (message.channel.isSendable()) {
-        message.channel;
-      }
-
       const guildId = message.guildId;
       if (!guildId) throw new GuildNotFoundError();
 
