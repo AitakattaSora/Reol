@@ -28,7 +28,9 @@ export default {
       if (query) {
         const lyrics = await getLyrics({ query });
         const lyric = lyrics[0];
-        if (!lyric) return message.channel.send('No lyrics found.');
+        if (!lyric) {
+          return message.channel.send('No lyrics found.');
+        }
 
         const lyricsEmbed = generateLyricsEmbed(lyric);
         return message.channel.send({ embeds: [lyricsEmbed] });

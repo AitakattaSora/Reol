@@ -1,6 +1,9 @@
 import { TextChannel, VoiceBasedChannel } from 'discord.js';
 import { Queue } from '../interfaces/Queue';
-import { joinVoiceChannel } from '@discordjs/voice';
+import {
+  DiscordGatewayAdapterCreator,
+  joinVoiceChannel,
+} from '@discordjs/voice';
 import { ENV } from '../utils/ENV';
 import { Command } from '../interfaces/Command';
 import { getTrack } from '../utils/getTrack';
@@ -15,7 +18,6 @@ export default {
   name: 'radio',
   description: 'Start radio based on a spotify song',
   aliases: ['r'],
-  disabled: true,
   async execute(client, message, args) {
     try {
       const voiceChannel =
@@ -26,6 +28,10 @@ export default {
         return message.reply(
           'Please join a voice channel or set a voice channel in the .env file.'
         );
+      }
+
+      if (message.channel.isSendable()) {
+        message.channel;
       }
 
       const guildId = message.guildId;
@@ -112,7 +118,8 @@ export default {
           connection: joinVoiceChannel({
             channelId: voiceChannel.id,
             guildId,
-            adapterCreator: voiceChannel.guild.voiceAdapterCreator,
+            adapterCreator: voiceChannel.guild
+              .voiceAdapterCreator as DiscordGatewayAdapterCreator,
             selfDeaf: false,
           }),
         });

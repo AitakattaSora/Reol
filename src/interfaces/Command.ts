@@ -1,4 +1,4 @@
-import { Message } from 'discord.js';
+import { Message, SendableChannels } from 'discord.js';
 import { MyClient } from '..';
 
 export interface Command {
@@ -8,7 +8,7 @@ export interface Command {
   disabled?: boolean;
   execute: (
     client: MyClient,
-    message: Message<boolean>,
+    message: Message & { channel: SendableChannels },
     args?: string[]
   ) => Promise<any>;
 }

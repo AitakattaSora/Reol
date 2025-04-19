@@ -1,4 +1,7 @@
-import { joinVoiceChannel } from '@discordjs/voice';
+import {
+  DiscordGatewayAdapterCreator,
+  joinVoiceChannel,
+} from '@discordjs/voice';
 import { EmbedBuilder, TextChannel, VoiceBasedChannel } from 'discord.js';
 import { Command } from '../interfaces/Command';
 import { Queue } from '../interfaces/Queue';
@@ -48,7 +51,8 @@ export default {
           connection: joinVoiceChannel({
             channelId: voiceChannel.id,
             guildId,
-            adapterCreator: voiceChannel.guild.voiceAdapterCreator,
+            adapterCreator: voiceChannel.guild
+              .voiceAdapterCreator as DiscordGatewayAdapterCreator,
             selfDeaf: false,
           }),
         });

@@ -6,7 +6,6 @@ import { DEFAULT_COLOR } from '../utils/helpers';
 export default {
   name: 'upcoming',
   description: 'Show radio upcoming tracks',
-  disabled: true,
   async execute(client, message, args) {
     try {
       const guildId = message.guildId;
