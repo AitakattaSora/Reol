@@ -17,10 +17,10 @@ export class SongRequest {
   title: string;
 
   // song name
-  @Column({ nullable: true })
+  @Column({ default: '' })
   name?: string;
 
-  @Column({ nullable: true })
+  @Column({ default: '' })
   artist?: string;
 
   @Column()

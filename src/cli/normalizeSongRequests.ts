@@ -30,7 +30,7 @@ function looksLikeOST(artistStr: string): boolean {
   return /(ost|soundtrack|original score)/i.test(artistStr);
 }
 
-export function isSimilarEnough(
+function isSimilarEnough(
   youtubeTitle: string,
   spotifyTrackTitle: string,
   artist: string
