@@ -26,7 +26,7 @@ export default {
         return message.reply(`Unable find spotify track from: ${query}`);
       }
 
-      const similarTracks = await getSimilarTracks(spotifyTrackId);
+      const similarTracks = await getSimilarTracks(spotifyTrackId, guildId);
       if (similarTracks.length === 0) {
         return message.reply('No similar tracks found');
       }

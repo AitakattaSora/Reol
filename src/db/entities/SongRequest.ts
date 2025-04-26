@@ -16,6 +16,13 @@ export class SongRequest {
   @Column()
   title: string;
 
+  // song name
+  @Column({ nullable: true })
+  name?: string;
+
+  @Column({ nullable: true })
+  artist?: string;
+
   @Column()
   requestedBy: string;
 

@@ -1,13 +1,15 @@
 import { spotifyFetch } from './spotifyAxiosClient';
 
+export interface TrackArtist {
+  id: string;
+  name: string;
+}
+
 export interface TrackDetails {
   id: string;
   name: string;
   popularity: number;
-  artists: {
-    id: string;
-    name: string;
-  }[];
+  artists: TrackArtist[];
 }
 
 export async function getTrackDetails(

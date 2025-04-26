@@ -38,10 +38,20 @@ spotifyClient.interceptors.response.use(
     const errorMessage =
       spotifyErrorMessage || error.message || 'Unknown error';
 
+    const additionalMsgs: string[] = [];
+    if (axios.isAxiosError(error) && error.status === 429) {
+      const retryAfter = error.response?.headers['retry-after'] || '';
+      if (retryAfter && !isNaN(Number(retryAfter))) {
+        additionalMsgs.push(`Retry After: ${retryAfter / 3600} hours`);
+      }
+    }
+
     return Promise.reject(
       `Error occurred at endpoint: ${url} with params: ${JSON.stringify(
         params
-      )}. Error message: ${errorMessage}`
+      )}. Error message: ${errorMessage}.${
+        additionalMsgs.length ? ` ${additionalMsgs.join('; ')}` : ''
+      }`
     );
   }
 );
