@@ -3,13 +3,12 @@ import { AppDataSource } from '../db';
 import { SongRequest } from '../db/entities/SongRequest';
 import { EmbedBuilder } from 'discord.js';
 import { DEFAULT_COLOR } from '../utils/helpers';
-import { truncateLongDescription } from '../utils/truncateDescription';
 import { ENV } from '../utils/ENV';
 
 export default {
   name: 'top',
   description: 'List the top requested songs',
-  async execute(client, message, args) {
+  async execute(_, message, args) {
     if (!ENV.USE_DB) {
       return message.reply('Song requests recording is not enabled');
     }
@@ -17,68 +16,68 @@ export default {
     const count = Number(args?.[0]) || 10;
     const guildId = message.guildId;
 
-    const songRequestRepository = AppDataSource.getRepository(SongRequest);
-    const requests: Array<SongRequest & { count: number }> =
-      await songRequestRepository
-        .createQueryBuilder('song_request')
-        .select(['id', 'title', 'url', 'COUNT(url) AS count'])
-        .where('guildId = :guildId', { guildId })
-        .groupBy('url')
-        .orderBy('COUNT(url)', 'DESC')
-        .take(count)
-        .getRawMany();
+    const repo = AppDataSource.getRepository(SongRequest);
+    const requests: Array<{
+      artist: string;
+      name: string;
+      url: string;
+      count: number;
+    }> = await repo
+      .createQueryBuilder('song_request')
+      .select([
+        'song_request.artist AS artist',
+        'song_request.name AS name',
+        'url',
+        'COUNT(*) AS count',
+      ])
+      .where('song_request.guildId = :guildId', { guildId })
+      .andWhere("song_request.artist != ''")
+      .andWhere("song_request.name != ''")
+      .groupBy('song_request.artist')
+      .addGroupBy('song_request.name')
+      .orderBy('COUNT(*)', 'DESC')
+      .take(count)
+      .getRawMany();
 
     if (!requests.length) {
       return message.reply('No songs requested yet');
     }
 
-    const mostRequestedDescription = requests
-      .map(
-        (request, idx) =>
-          `${idx + 1}. [${request.title}](${request.url}) - ${
-            request.count
-          } plays`
-      )
-      .join('\n');
+    const MAX_LENGTH = 4096;
+    let totalLength = 0;
+    let description = '';
+    let shownCount = 0;
 
-    const topSongsEmbed = new EmbedBuilder()
+    for (let i = 0; i < requests.length; i++) {
+      const request = requests[i];
+      const entry = `${i + 1}. [${request.artist} - ${request.name}](${
+        request.url
+      }) - ${request.count} plays`;
+
+      const nextTotal = totalLength + entry.length;
+      const remaining = requests.length - (i + 1);
+      const andMoreText = `...and ${remaining} more`;
+
+      if (remaining > 0 && nextTotal + andMoreText.length > MAX_LENGTH) {
+        break;
+      }
+
+      description += entry + '\n';
+      totalLength = nextTotal;
+      shownCount++;
+    }
+
+    if (shownCount < requests.length) {
+      description += `...and ${requests.length - shownCount} more`;
+    }
+
+    const embed = new EmbedBuilder()
       .setTitle('Top requested songs')
-      .setDescription(truncateLongDescription(mostRequestedDescription))
-      .setColor(DEFAULT_COLOR);
-
-    const topRequesters: Array<{ count: number; requestedBy: string }> =
-      await songRequestRepository
-        .createQueryBuilder('sr')
-        .select('sr.requestedBy', 'requestedBy')
-        .addSelect('COUNT(sr.requestedBy)', 'count')
-        .where('sr.guildId = :guildId', { guildId })
-        .groupBy('sr.requestedBy')
-        .orderBy('COUNT(sr.requestedBy)', 'DESC')
-        .getRawMany();
-
-    const requesters = await Promise.all(
-      topRequesters
-        .filter((r) => r.requestedBy !== 'bot')
-        .map(async (requester) => {
-          const user = await client.users.fetch(requester.requestedBy);
-          return {
-            count: requester.count,
-            user,
-          };
-        })
-    );
-
-    const requestersDescription = requesters
-      .map((r, idx) => `${idx + 1}. ${r.user.displayName} - ${r.count} times`)
-      .join('\n');
-
-    const topRequestersEmbed = new EmbedBuilder()
-      .setTitle('Top requesters')
-      .setDescription(truncateLongDescription(requestersDescription))
+      .setDescription(description)
       .setColor(DEFAULT_COLOR);
 
     message.channel.send({
-      embeds: [topSongsEmbed, topRequestersEmbed],
+      embeds: [embed],
     });
   },
 } as Command;
